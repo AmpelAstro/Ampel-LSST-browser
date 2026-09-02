@@ -1,6 +1,6 @@
 import { Long } from 'mongodb';
 import { GraphQLScalarType } from 'graphql';
-import { JSONObjectResolver as BaseJSONObjectResolver } from 'graphql-scalars';
+import { JSONResolver as BaseJSONResolver } from 'graphql-scalars';
 
 export const BSONLongResolver = new GraphQLScalarType({
   name: 'Long',
@@ -34,7 +34,7 @@ const serializeJSONObject = (value: any) => {
   if (value instanceof Long) {
     return BSONLongResolver.serialize(value);
   }
-  if (typeof value == 'object') {
+  if (typeof value == 'object' && value !== null && value !== undefined) {
     Object.keys(value).forEach(key => {
       value[key] = serializeJSONObject(value[key]);
     });
@@ -45,9 +45,8 @@ const serializeJSONObject = (value: any) => {
 
 // Custom JSONObject resolver that serializes Long values in extended JSON format
 export const JSONObjectResolver = new GraphQLScalarType({
-  ...BaseJSONObjectResolver,
+  ...BaseJSONResolver,
   serialize(value: any) {
-    let obj = BaseJSONObjectResolver.serialize(value);
-    return serializeJSONObject(obj);
+    return serializeJSONObject(value);
   },
 });

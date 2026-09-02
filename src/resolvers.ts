@@ -102,6 +102,14 @@ export const resolvers = {
         return doc ? { ...doc, __typename: collection.collectionName === 't1' ? 'T1Document' : 'T2Document' } : null;
       }
       return null;
+    },
+    body: (parent: any) => {
+      if (parent.body === null || parent.body === undefined) return null;
+      if (Array.isArray(parent.body)) {
+        if (parent.body.length === 0) return null;
+        return parent.body[parent.body.length-1];
+      }
+      return parent.body;
     }
   },
   JournalRecord: {
