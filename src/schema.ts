@@ -60,6 +60,8 @@ enum DocumentCode {
 type T1Document {
   link: Long!
   stock: Long!
+  channel: [String!]
+  tag: [String!]
   dps: [T0Document]
   body: JSONObject
 }
@@ -130,7 +132,7 @@ type Stock {
 }
 
 type Query {
-  stock(stock: ID!): Stock
+  stock(stock: Long!): Stock
   code: DocumentCode!
 }
 

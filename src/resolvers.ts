@@ -1,6 +1,6 @@
 import { ObjectId, Long } from 'mongodb';
+import { BSONLongResolver, JSONObjectResolver } from './types.ts';
 import { connectDb } from './db.ts';
-import { GraphQLScalarType } from 'graphql';
 
 const buildProjection = (info: any) => {
   const projection: Record<string, number> = {};
@@ -12,21 +12,6 @@ const buildProjection = (info: any) => {
   }
   return projection;
 };
-
-const longFromString = new GraphQLScalarType({
-  name: 'Long',
-  description: 'Description of my custom scalar type',
-  serialize(value: Long) {
-    return value.toString();
-  },
-  parseValue(value: string) {
-    return new Long(value);
-  },
-  parseLiteral(ast) {
-    switch (ast.kind) {
-    }
-  }
-});
 
 const getConfig = async (configId: Long) => {
   const db = await connectDb();
@@ -81,26 +66,15 @@ const DocumentCode = {
 
 export const resolvers = {
   Query: {
-    stock: async (_: unknown, { stock }: { stock: string }, __: unknown, info: any) => {
-      const db = await connectDb();
-      const stockId = Long.fromString(stock);      
-      const doc = await db.collection('stock').findOne({ stock: stockId }, {projection: buildProjection(info)});
+    stock: async (_: unknown, { stock }: { stock: Long }, __: unknown, info: any) => {
+      const db = await connectDb();  
+      const doc = await db.collection('stock').findOne({ stock: stock }, {projection: buildProjection(info)});
       return doc;
     },
   },
-  Long: longFromString,
+  JSONObject: JSONObjectResolver,
+  Long: BSONLongResolver,
   DocumentCode,
-  LinkedDocument: {
-    __resolveType: (obj: any) => {
-      if (obj.dps !== undefined) {
-        return 'T1Document';
-      } else if (obj.body !== undefined) {
-        return 'T0Document';
-      } else {
-        return null;
-      }
-    },
-  },
   T1Document: {
     dps: async (parent: any) => {
       const db = await connectDb();
