@@ -102,8 +102,7 @@ export const resolvers = {
   T1Document: {
     dps: async (parent: any) => {
       const db = await connectDb();
-      const docs = await db.collection('t0').find({ stock: parent.stock }).toArray();
-      return docs.map(doc => ({ ...doc, id: doc._id.toString(), stock: doc.stock.toString(), origin: doc.origin?.toString() }));
+      return await db.collection('t0').find({ stock: parent.stock, id: {$in: parent.dps || []} }).toArray();
     }
   },
   T2Document: {
@@ -153,6 +152,19 @@ export const resolvers = {
     ts: (parent: any) => {
       if (!parent.ts) return null;
       return new Date(parent.ts * 1000);
+    }
+  },
+  Stock: {
+    journal: (parent: any, { tier, unit }: { tier?: number; unit?: string }, __: unknown, info: any) => {
+      if (!parent.journal) return parent.journal;
+      if (tier !== undefined || unit !== undefined) {
+        return parent.journal.filter((record: any) => {
+          if (tier !== undefined && record.tier !== tier) return false;
+          if (unit !== undefined && record.unit !== unit) return false;
+          return true;
+        });
+      }
+      return parent.journal;
     }
   }
 };

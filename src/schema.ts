@@ -96,11 +96,12 @@ type JournalRecord {
   tier: Int
   "UNIX epoch of the associated process"
   ts: DateTime
-  channel: [String!]
+  channel: [String!]!
   process: String
-  tag: [String!]
+  tag: [String!]!
   run: Int
   code: DocumentCode
+  unit: String
   duration: Float
   doc: T2Document
 }
@@ -127,7 +128,7 @@ type Stock {
   channel: [String!]
   "Survey names"
   name: [String!]
-  journal: [JournalRecord]
+  journal(tier: Int, unit: String): [JournalRecord]
   body: JSONObject
 }
 
