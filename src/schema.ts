@@ -133,7 +133,7 @@ type Stock {
 
 type Query {
   stock(stock: Long!): Stock
-  code: DocumentCode!
+  stocks(channel: String, tag: String, after: DateTime, before: DateTime, limit: Int): [Stock]
 }
 
 `;

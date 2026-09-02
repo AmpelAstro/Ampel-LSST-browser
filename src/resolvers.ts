@@ -1,5 +1,6 @@
 import { ObjectId, Long } from 'mongodb';
 import { BSONLongResolver, JSONObjectResolver } from './types.ts';
+import { DateTimeResolver } from 'graphql-scalars';
 import { connectDb } from './db.ts';
 
 const buildProjection = (info: any) => {
@@ -71,9 +72,32 @@ export const resolvers = {
       const doc = await db.collection('stock').findOne({ stock: stock }, {projection: buildProjection(info)});
       return doc;
     },
+    stocks: async (_: unknown, { channel, tag, after, before, limit }: { channel?: string; tag?: string; after?: Date; before?: Date; limit?: number }, __: unknown, info: any) => {
+      const db = await connectDb();
+      const filter: Record<string, any> = {};
+      if (channel) {
+        filter.channel = channel;
+      }
+      if (tag) {
+        filter.tag = tag;
+      }
+      if (after || before) {
+        const key = `ts.${channel || 'any'}.upd`;
+        filter[key] = {};
+        if (after) {
+          filter[key].$gte = after.getTime() / 1000;
+        }
+        if (before) {
+          filter[key].$lte = before.getTime() / 1000;
+        }
+      }
+      const docs = await db.collection('stock').find(filter, {projection: buildProjection(info)}).limit(limit || 100).toArray();
+      return docs;
+    },
   },
   JSONObject: JSONObjectResolver,
   Long: BSONLongResolver,
+  DateTime: DateTimeResolver,
   DocumentCode,
   T1Document: {
     dps: async (parent: any) => {
