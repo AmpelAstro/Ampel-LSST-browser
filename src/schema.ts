@@ -4,6 +4,59 @@ scalar Long
 scalar JSONObject
 scalar DateTime
 
+enum DocumentCode {
+  "unit has processed the document successfully"
+  OK
+  "document has been created, but not yet processed"
+  NEW
+  ERROR
+  "internal error occurred"
+  INTERNAL_ERROR
+  "unit raised an exception"
+  EXCEPTION
+  "document is currently being processed"
+  RUNNING
+  RERUN_REQUESTED
+  "unit failed to process the document after multiple attempts"
+  TOO_MANY_TRIALS
+  NOT_SET
+
+  T1_NEW_PRIO
+  T1_UNKNOWN_CONFIG
+
+  T2_NEW_PRIO
+  "dependency has not yet succeeded, but may do so in the future"
+  T2_PENDING_DEPENDENCY
+  T2_QUEUED
+  T2_EXPORTED
+  "might be an ingester bugs, or uncommitted updates"
+  T2_UNKNOWN_LINK
+  T2_UNKNOWN_CONFIG
+  "misconfiguration, or uncommitted updates"
+  T2_MISSING_DEPENDENCY
+  "misconfigured dependency specification"
+  T2_UNEXPECTED_DEPENDENCY
+  "ingester bugs, or uncommitted updates"
+  T2_MISSING_INFO
+  "unit returned unexpected type"
+  T2_OUTDATED_CODE
+  "dependency encountered a permanent error"
+  T2_FAILED_DEPENDENCY
+  "dependency does not meet the unit's criteria"
+  T2_INADEQUATE_DEPENDENCY
+
+  "error occured in context stage"
+  T3_CONTEXT_ERROR
+  "error occured in select stage"
+  T3_SELECT_ERROR
+  "error occured in load stage"
+  T3_LOAD_ERROR
+  "error occured in complement stage"
+  T3_COMPLEMENT_ERROR
+  "error occured in run stage"
+  T3_RUN_ERROR
+}
+
 type T1Document {
   link: Long!
   stock: Long!
@@ -29,7 +82,7 @@ type T2Document {
   stock: Long!
   link: LinkedDocument
   col: Int
-  code: Int
+  code: DocumentCode
   meta: [MetaRecord]
   body: JSONObject
 }
@@ -45,7 +98,7 @@ type JournalRecord {
   process: String
   tag: [String!]
   run: Int
-  code: Int
+  code: DocumentCode
   duration: Float
   doc: T2Document
 }
@@ -53,7 +106,7 @@ type JournalRecord {
 type MetaRecord {
   ts: DateTime
   tier: Int
-  code: Int
+  code: DocumentCode
   duration: Float
 }
 
@@ -77,7 +130,8 @@ type Stock {
 }
 
 type Query {
-  stock(stock: Long!): Stock
+  stock(stock: ID!): Stock
+  code: DocumentCode!
 }
 
 `;
