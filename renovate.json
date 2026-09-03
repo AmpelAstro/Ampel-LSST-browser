@@ -1,0 +1,10 @@
+{
+  "extends": [
+    "github>AmpelProject/renovate-config",
+    "github>AmpelProject/renovate-config//regexManagers/githubActionsVersions",
+    "github>AmpelProject/renovate-config//regexManagers/dockerfileVersions",
+    "github>AmpelProject/renovate-config//regexManagers/precommitVersions"
+  ],
+  "enabledManagers": ["regex", "npm"],
+  "baseBranches": ["main"]
+}
