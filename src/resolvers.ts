@@ -1,13 +1,15 @@
-import { ObjectId, Long } from 'mongodb';
-import { BSONLongResolver, JSONObjectResolver } from './types.ts';
-import { DateTimeResolver } from 'graphql-scalars';
-import { connectDb } from './db.ts';
+import { DateTimeResolver } from "graphql-scalars";
+import type { GraphQLResolveInfo } from "graphql";
+import type { ObjectId, Long, Document, Binary } from "bson";
 
-const buildProjection = (info: any) => {
+import { BSONLongResolver, JSONObjectResolver } from "./types.ts";
+import { connectDb } from "./db.ts";
+
+const buildProjection = (info: GraphQLResolveInfo) => {
   const projection: Record<string, number> = {};
-  const selections = info.fieldNodes[0].selectionSet.selections;
+  const selections = info?.fieldNodes[0]?.selectionSet?.selections || [];
   for (const selection of selections) {
-    if (selection.kind === 'Field') {
+    if (selection.kind === "Field") {
       projection[selection.name.value] = 1;
     }
   }
@@ -16,19 +18,23 @@ const buildProjection = (info: any) => {
 
 const getConfig = async (configId: Long) => {
   const db = await connectDb();
-  const doc = await db.collection('conf').findOne({ _id: configId }, { projection: { _id: 0 } });
+  const doc = await db
+    .collection("conf")
+    .findOne({ _id: configId }, { projection: { _id: 0 } });
   if (!doc) return null;
   // recursively resolve t2_dependency.config
   if (doc.t2_dependency) {
-    doc.t2_dependency_res = await Promise.all(doc.t2_dependency.map(async (dep: any) => {
-      if (dep.config) {
-        dep.config = await getConfig(dep.config);
-      }
-      return dep;
-    }));
+    doc.t2_dependency = await Promise.all(
+      doc.t2_dependency.map(async (dep: Document) => {
+        if (dep.config) {
+          dep.config = await getConfig(dep.config);
+        }
+        return dep;
+      }),
+    );
   }
   return doc;
-}
+};
 
 // maps each enum name to its numeric DocumentCode value, so integers resolve to the matching enum member
 const DocumentCode = {
@@ -65,15 +71,68 @@ const DocumentCode = {
   T3_RUN_ERROR: -3004,
 };
 
+interface T2Document {
+  link: Long | null;
+  col: string | null;
+  stock: Long | null;
+  config: Long | null;
+  body: object[] | null;
+}
+
+interface JournalRecord {
+  tier: number;
+  unit: string;
+  ts: number;
+  doc: Binary | null;
+}
+
+interface MetaRecord {
+  ts: number;
+  tier: number;
+}
+
+interface StockDocument {
+  stock: Long;
+  channel: string[];
+  tag: string[];
+  journal: JournalRecord[];
+  meta: MetaRecord[];
+}
+
 export const resolvers = {
   Query: {
-    stock: async (_: unknown, { stock }: { stock: Long }, __: unknown, info: any) => {
-      const db = await connectDb();  
-      const doc = await db.collection('stock').findOne({ stock: stock }, {projection: buildProjection(info)});
+    stock: async (
+      _: unknown,
+      { stock }: { stock: Long },
+      __: unknown,
+      info: GraphQLResolveInfo,
+    ) => {
+      const db = await connectDb();
+      const doc = await db
+        .collection("stock")
+        .findOne({ stock: stock }, { projection: buildProjection(info) });
       return doc;
     },
-    stocks: async (_: unknown, { channel, tag, after, before, limit }: { channel?: string; tag?: string; after?: Date; before?: Date; limit?: number }, __: unknown, info: any) => {
+    stocks: async (
+      _: unknown,
+      {
+        channel,
+        tag,
+        after,
+        before,
+        limit,
+      }: {
+        channel?: string;
+        tag?: string;
+        after?: Date;
+        before?: Date;
+        limit?: number;
+      },
+      __: unknown,
+      info: GraphQLResolveInfo,
+    ) => {
       const db = await connectDb();
+      /* eslint-disable  @typescript-eslint/no-explicit-any */
       const filter: Record<string, any> = {};
       if (channel) {
         filter.channel = channel;
@@ -82,7 +141,7 @@ export const resolvers = {
         filter.tag = tag;
       }
       if (after || before) {
-        const key = `ts.${channel || 'any'}.upd`;
+        const key = `ts.${channel || "any"}.upd`;
         filter[key] = {};
         if (after) {
           filter[key].$gte = after.getTime() / 1000;
@@ -91,7 +150,11 @@ export const resolvers = {
           filter[key].$lte = before.getTime() / 1000;
         }
       }
-      const docs = await db.collection('stock').find(filter, {projection: buildProjection(info)}).limit(limit || 100).toArray();
+      const docs = await db
+        .collection("stock")
+        .find(filter, { projection: buildProjection(info) })
+        .limit(limit || 100)
+        .toArray();
       return docs;
     },
   },
@@ -100,71 +163,110 @@ export const resolvers = {
   DateTime: DateTimeResolver,
   DocumentCode,
   T1Document: {
-    dps: async (parent: any) => {
+    dps: async (parent: Document) => {
       const db = await connectDb();
-      return await db.collection('t0').find({ stock: parent.stock, id: {$in: parent.dps || []} }).toArray();
-    }
+      return await db
+        .collection("t0")
+        .find({ stock: parent.stock, id: { $in: parent.dps || [] } })
+        .toArray();
+    },
   },
   T2Document: {
     // resolve hashed config
-    config: async (parent: any) => {
+    config: async (parent: T2Document) => {
       if (!parent.config) return null;
       return await getConfig(parent.config);
     },
     // resolve input doc id
-    link: async (parent: any) => {
+    link: async (parent: T2Document) => {
       const db = await connectDb();
-      const collection = db.collection(parent.col == undefined ? 't1' : parent.col);
-      if (collection.collectionName === 't0') {
+      const collection = db.collection(
+        parent.col == undefined ? "t1" : parent.col,
+      );
+      if (collection.collectionName === "t0") {
         const filter = { id: parent.link };
-        const doc = await collection.findOne(filter, {projection: { _id: 0 }});
-        return doc ? { ...doc, __typename: 'T0Document' } : null;
-      } else if (collection.collectionName === 't1' || collection.collectionName === 't2') {
-        const filter = { stock: parent.stock, link: parent.link }
-        const doc = await collection.findOne(filter, {projection: { _id: 0 }});
-        return doc ? { ...doc, __typename: collection.collectionName === 't1' ? 'T1Document' : 'T2Document' } : null;
+        const doc = await collection.findOne(filter, {
+          projection: { _id: 0 },
+        });
+        return doc ? { ...doc, __typename: "T0Document" } : null;
+      } else if (
+        collection.collectionName === "t1" ||
+        collection.collectionName === "t2"
+      ) {
+        const filter = { stock: parent.stock, link: parent.link };
+        const doc = await collection.findOne(filter, {
+          projection: { _id: 0 },
+        });
+        return doc
+          ? {
+              ...doc,
+              __typename:
+                collection.collectionName === "t1"
+                  ? "T1Document"
+                  : "T2Document",
+            }
+          : null;
       }
       return null;
     },
-    body: (parent: any) => {
+    body: (parent: T2Document) => {
       if (parent.body === null || parent.body === undefined) return null;
       if (Array.isArray(parent.body)) {
         if (parent.body.length === 0) return null;
-        return parent.body[parent.body.length-1];
+        return parent.body[parent.body.length - 1];
       }
       return parent.body;
-    }
+    },
   },
   JournalRecord: {
-    doc: async (parent: any, _: unknown, __: unknown, info: any) => {
+    doc: async (
+      parent: JournalRecord,
+      _: unknown,
+      __: unknown,
+      info: GraphQLResolveInfo,
+    ) => {
       if (!parent.doc) return null;
       const oid = ObjectId.createFromHexString(parent.doc.buffer.toHex());
       const db = await connectDb();
-      const doc = await db.collection('t2').findOne({ _id: oid }, {projection: {...buildProjection(info), col: 1, stock: 1, link: 1, id: 1}});
+      const doc = await db.collection("t2").findOne(
+        { _id: oid },
+        {
+          projection: {
+            ...buildProjection(info),
+            col: 1,
+            stock: 1,
+            link: 1,
+            id: 1,
+          },
+        },
+      );
       return doc;
     },
-    ts: (parent: any) => {
+    ts: (parent: JournalRecord) => {
       if (!parent.ts) return null;
       return new Date(parent.ts * 1000);
-    }
+    },
   },
   MetaRecord: {
-    ts: (parent: any) => {
+    ts: (parent: MetaRecord) => {
       if (!parent.ts) return null;
       return new Date(parent.ts * 1000);
-    }
+    },
   },
   Stock: {
-    journal: (parent: any, { tier, unit }: { tier?: number; unit?: string }, __: unknown, info: any) => {
+    journal: (
+      parent: StockDocument,
+      { tier, unit }: { tier?: number; unit?: string },
+    ) => {
       if (!parent.journal) return parent.journal;
       if (tier !== undefined || unit !== undefined) {
-        return parent.journal.filter((record: any) => {
+        return parent.journal.filter((record: JournalRecord) => {
           if (tier !== undefined && record.tier !== tier) return false;
           if (unit !== undefined && record.unit !== unit) return false;
           return true;
         });
       }
       return parent.journal;
-    }
-  }
+    },
+  },
 };
