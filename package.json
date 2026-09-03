@@ -1,9 +1,12 @@
 {
-  "name": "graphql",
+  "name": "ampel-graphql",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/src/*.d.ts",
   "scripts": {
-    "dev": "nodemon --exec 'node' src/index.ts"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -22,12 +25,13 @@
     "eslint": "^10.9.1",
     "globals": "^17.12.0",
     "jiti": "^2.7.0",
-    "nodemon": "^3.1.14",
+    "tsx": "^4.23.13",
     "typescript": "*",
     "typescript-eslint": "^8.69.0"
   },
   "allowScripts": {
     "@apollo/protobufjs@1.2.8": true,
-    "fsevents@2.3.3": true
+    "fsevents@2.3.3": true,
+    "esbuild@0.28.2": true
   }
 }

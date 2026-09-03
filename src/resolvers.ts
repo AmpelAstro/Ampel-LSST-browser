@@ -1,9 +1,10 @@
 import { DateTimeResolver } from "graphql-scalars";
+import { ObjectId, Long } from "bson";
 import type { GraphQLResolveInfo } from "graphql";
-import type { ObjectId, Long, Document, Binary } from "bson";
+import type { Document, Binary } from "bson";
 
-import { BSONLongResolver, JSONObjectResolver } from "./types.ts";
-import { connectDb } from "./db.ts";
+import { BSONLongResolver, JSONObjectResolver } from "./types";
+import { connectDb } from "./db";
 
 const buildProjection = (info: GraphQLResolveInfo) => {
   const projection: Record<string, number> = {};
