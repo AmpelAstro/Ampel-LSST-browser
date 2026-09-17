@@ -3,8 +3,8 @@ import { ObjectId, Long } from "bson";
 import type { GraphQLResolveInfo } from "graphql";
 import type { Document, Binary } from "bson";
 
-import { BSONLongResolver, JSONObjectResolver } from "./types";
-import { connectDb } from "./db";
+import { BSONLongResolver, JSONObjectResolver } from "./types.js";
+import { connectDb } from "./db.js";
 
 const buildProjection = (info: GraphQLResolveInfo) => {
   const projection: Record<string, number> = {};
