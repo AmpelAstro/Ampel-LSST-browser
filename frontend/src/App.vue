@@ -368,7 +368,7 @@ onBeforeUnmount(() => {
     <header class="topbar">
       <a class="wordmark" href="#top" aria-label="Ampel dashboard home">
         <span class="wordmark-icon" aria-hidden="true">A</span>
-        <span>AMPEL<span class="wordmark-divider">/</span>SKY</span>
+        <span>AMPEL<span class="wordmark-divider">/</span>LSST</span>
       </a>
       <div class="topbar-meta">
         <span class="live-indicator" aria-hidden="true"></span>
