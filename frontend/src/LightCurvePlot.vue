@@ -36,14 +36,14 @@ async function renderChart(points: PhotometryPoint[]) {
         name: band.name,
         x: matches.map((point) => new Date(point.utcTime)),
         y: matches.map((point) => point.flux),
-        marker: { color: band.color, symbol: band.symbol, size: 9 },
+        marker: { color: band.color, symbol: band.symbol, size: 5 },
         error_y: {
           type: "data",
           array: matches.map((point) => point.fluxError),
           visible: true,
           color: band.color,
           thickness: 1,
-          width: 3,
+          width: 0,
         },
         hovertemplate:
           "%{x|%Y-%m-%d %H:%M:%S UTC}<br>%{y:.2f} nJy<extra>%{fullData.name}</extra>",
