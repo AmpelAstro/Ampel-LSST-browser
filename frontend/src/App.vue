@@ -8,6 +8,7 @@ const GRAPHQL_URL =
   import.meta.env.VITE_GRAPHQL_URL ?? "http://localhost:4000/";
 const PAGE_SIZE = 20;
 const HOUR_MS = 3_600_000;
+const SLIDER_UPDATE_DEBOUNCE_MS = 120;
 const initialNow = Date.now();
 
 const channelQuery = `query ChannelChoices($after: DateTime, $before: DateTime) {
@@ -97,6 +98,10 @@ const appliedSignature = ref("");
 const sentinel = ref<HTMLElement | null>(null);
 let observer: IntersectionObserver | undefined;
 let channelTimer: ReturnType<typeof setTimeout> | undefined;
+let afterSliderTimer: ReturnType<typeof setTimeout> | undefined;
+let beforeSliderTimer: ReturnType<typeof setTimeout> | undefined;
+let pendingAfterMs: number | undefined;
+let pendingBeforeMs: number | undefined;
 
 const selectedRange = computed(() =>
   Math.max(HOUR_MS, beforeMs.value - afterMs.value),
@@ -248,22 +253,56 @@ async function loadStocks(reset = false) {
 }
 
 function applyFilters() {
+  flushSliderValues();
   if (locationValidation.value.error) return;
   void loadStocks(true);
 }
 
 function changeAfter(event: Event) {
   const target = event.target as HTMLInputElement;
-  const next = Number(target.value);
-  afterMs.value = next <= afterDomainMin.value ? afterDomainMin.value : next;
+  pendingAfterMs = Number(target.value);
+  if (afterSliderTimer) clearTimeout(afterSliderTimer);
+  afterSliderTimer = setTimeout(flushAfterValue, SLIDER_UPDATE_DEBOUNCE_MS);
 }
 
 function changeBefore(event: Event) {
   const target = event.target as HTMLInputElement;
-  beforeMs.value = Math.min(
-    nowMs.value,
-    Math.max(afterMs.value, Number(target.value)),
+  pendingBeforeMs = Number(target.value);
+  if (beforeSliderTimer) clearTimeout(beforeSliderTimer);
+  beforeSliderTimer = setTimeout(flushBeforeValue, SLIDER_UPDATE_DEBOUNCE_MS);
+}
+
+function flushAfterValue() {
+  if (afterSliderTimer) clearTimeout(afterSliderTimer);
+  afterSliderTimer = undefined;
+  if (pendingAfterMs === undefined) return;
+
+  const next = pendingAfterMs;
+  pendingAfterMs = undefined;
+  afterMs.value = Math.min(
+    beforeMs.value,
+    Math.max(afterDomainMin.value, next),
   );
+}
+
+function flushBeforeValue() {
+  if (beforeSliderTimer) clearTimeout(beforeSliderTimer);
+  beforeSliderTimer = undefined;
+  if (pendingBeforeMs === undefined) return;
+
+  const next = pendingBeforeMs;
+  pendingBeforeMs = undefined;
+  beforeMs.value = Math.min(nowMs.value, Math.max(afterMs.value, next));
+}
+
+function flushSliderValues() {
+  flushAfterValue();
+  flushBeforeValue();
+}
+
+function finishSliderChange() {
+  flushSliderValues();
+  scheduleChannelChoices();
 }
 
 function toggleChannel(channel: string, checked: boolean) {
@@ -318,6 +357,8 @@ watch(sentinel, (element, previous) => {
 onBeforeUnmount(() => {
   observer?.disconnect();
   if (channelTimer) clearTimeout(channelTimer);
+  if (afterSliderTimer) clearTimeout(afterSliderTimer);
+  if (beforeSliderTimer) clearTimeout(beforeSliderTimer);
 });
 </script>
 
@@ -369,7 +410,7 @@ onBeforeUnmount(() => {
                 :value="afterMs"
                 aria-label="After date; extend earlier by dragging to the left edge"
                 @input="changeAfter"
-                @change="scheduleChannelChoices"
+                @change="finishSliderChange"
               />
               <input
                 class="range-slider range-before"
@@ -380,7 +421,7 @@ onBeforeUnmount(() => {
                 :value="beforeMs"
                 aria-label="Before date"
                 @input="changeBefore"
-                @change="scheduleChannelChoices"
+                @change="finishSliderChange"
               />
             </div>
             <div class="range-ends"><span>EARLIER</span><span>NOW</span></div>
