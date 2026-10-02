@@ -18,6 +18,34 @@ const bands = [
   { name: "y", color: "#e377c2", symbol: "star" },
 ] as const;
 
+function magnitudeTicks(points: PhotometryPoint[]) {
+  const positiveFluxes = points
+    .map((point) => point.flux)
+    .filter((flux) => flux > 0 && Number.isFinite(flux));
+  if (!positiveFluxes.length) return [];
+
+  const minFlux = Math.min(...positiveFluxes);
+  const maxFlux = Math.max(...positiveFluxes);
+  const minMagnitude = 31.4 - 2.5 * Math.log10(maxFlux);
+  const maxMagnitude = 31.4 - 2.5 * Math.log10(minFlux);
+  const firstMagnitude = Math.ceil(minMagnitude);
+  const lastMagnitude = Math.floor(maxMagnitude);
+  const magnitudes =
+    firstMagnitude <= lastMagnitude
+      ? Array.from(
+          { length: lastMagnitude - firstMagnitude + 1 },
+          (_, index) => firstMagnitude + index,
+        )
+      : [(minMagnitude + maxMagnitude) / 2];
+
+  return magnitudes
+    .map((magnitude) => ({
+      magnitude,
+      flux: 10 ** ((31.4 - magnitude) / 2.5),
+    }))
+    .sort((left, right) => left.flux - right.flux);
+}
+
 async function renderChart(points: PhotometryPoint[]) {
   const element = chart.value;
   if (!element || !points.length) return;
@@ -50,10 +78,23 @@ async function renderChart(points: PhotometryPoint[]) {
       },
     ];
   });
+  if (points.some((point) => point.flux > 0)) {
+    traces.push({
+      type: "scatter",
+      mode: "markers",
+      name: "AB magnitude scale",
+      x: points.map((point) => new Date(point.utcTime)),
+      y: points.map((point) => point.flux),
+      yaxis: "y2",
+      marker: { opacity: 0, size: 0 },
+      showlegend: false,
+      hoverinfo: "skip",
+    });
+  }
 
   const layout: Partial<Layout> = {
     autosize: true,
-    margin: { l: 58, r: 18, t: 12, b: 46 },
+    margin: { l: 58, r: 64, t: 12, b: 46 },
     paper_bgcolor: "#ffffff",
     plot_bgcolor: "#ffffff",
     font: { family: "IBM Plex Sans, sans-serif", color: "#53645c", size: 11 },
@@ -68,6 +109,18 @@ async function renderChart(points: PhotometryPoint[]) {
       title: { text: "Flux (nJy)" },
       gridcolor: "#e6ece8",
       zerolinecolor: "#aebbb3",
+      linecolor: "#d1dcd5",
+    },
+    yaxis2: {
+      title: { text: "Magnitude (AB)" },
+      overlaying: "y",
+      matches: "y",
+      side: "right",
+      tickmode: "array",
+      tickvals: magnitudeTicks(points).map((tick) => tick.flux),
+      ticktext: magnitudeTicks(points).map((tick) => tick.magnitude.toFixed(1)),
+      showgrid: false,
+      zeroline: false,
       linecolor: "#d1dcd5",
     },
     legend: { orientation: "h", y: 1.16, x: 0, font: { size: 10 } },
