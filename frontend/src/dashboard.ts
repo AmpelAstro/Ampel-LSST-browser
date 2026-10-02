@@ -32,6 +32,7 @@ interface JournalRecord {
 
 export interface StockResult {
   stock: LongValue;
+  channel?: string[] | null;
   photometry?: JournalRecord[] | null;
   catalogMatches?: JournalRecord[] | null;
 }

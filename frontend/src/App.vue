@@ -33,6 +33,7 @@ const stockPageQuery = `query RecentStocks(
   ) {
     items {
       stock
+      channel
       photometry: journal(tier: 2) {
         doc {
           link {
@@ -607,6 +608,17 @@ onBeforeUnmount(() => {
               >
                 {{ longToString(stock.stock) }}
               </a>
+              <div
+                class="catalog-chips stock-channel-chips"
+                aria-label="Matched channels"
+              >
+                <span
+                  v-for="channel in stock.channel ?? []"
+                  :key="channel"
+                  class="catalog-chip"
+                  >{{ channel }}</span
+                >
+              </div>
               <span class="row-index">{{
                 String(stocks.indexOf(stock) + 1).padStart(3, "0")
               }}</span>

@@ -651,6 +651,10 @@ a {
   font-size: 12px;
   text-decoration: none;
 }
+.stock-channel-chips {
+  min-width: 0;
+  margin-left: 2px;
+}
 .stock-id:hover {
   color: var(--signal);
   text-decoration: underline;
