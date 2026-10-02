@@ -1,6 +1,7 @@
 import { DateTimeResolver } from "graphql-scalars";
 import { ObjectId, Long } from "bson";
-import type { GraphQLResolveInfo } from "graphql";
+import { GraphQLError } from "graphql";
+import type { FieldNode, GraphQLResolveInfo, SelectionSetNode } from "graphql";
 import type { Document, Binary } from "bson";
 
 import { BSONLongResolver, JSONObjectResolver } from "./types.js";
@@ -15,6 +16,142 @@ const buildProjection = (info: GraphQLResolveInfo) => {
     }
   }
   return projection;
+};
+
+const collectFields = (
+  selectionSet: SelectionSetNode | undefined,
+  fragments: GraphQLResolveInfo["fragments"],
+  visited = new Set<string>(),
+): FieldNode[] => {
+  const fields: FieldNode[] = [];
+  for (const selection of selectionSet?.selections || []) {
+    if (selection.kind === "Field") {
+      fields.push(selection);
+    } else if (selection.kind === "InlineFragment") {
+      fields.push(...collectFields(selection.selectionSet, fragments, visited));
+    } else if (!visited.has(selection.name.value)) {
+      visited.add(selection.name.value);
+      const fragment = fragments[selection.name.value];
+      if (fragment) {
+        fields.push(
+          ...collectFields(fragment.selectionSet, fragments, visited),
+        );
+      }
+    }
+  }
+  return fields;
+};
+
+const buildStockPageProjection = (info: GraphQLResolveInfo) => {
+  const rootFields = collectFields(
+    info.fieldNodes[0]?.selectionSet,
+    info.fragments,
+  );
+  const itemsField = rootFields.find((field) => field.name.value === "items");
+  const projection: Record<string, number> = { stock: 1, "ts.any.upd": 1 };
+  for (const field of collectFields(itemsField?.selectionSet, info.fragments)) {
+    if (field.name.value !== "__typename") {
+      projection[field.name.value] = 1;
+    }
+  }
+  return projection;
+};
+
+const getTimeRange = (after?: Date, before?: Date): Document | undefined => {
+  if (!after && !before) return undefined;
+  const range: Document = {};
+  if (after) range.$gte = after.getTime() / 1000;
+  if (before) range.$lte = before.getTime() / 1000;
+  return range;
+};
+
+const decodeStockCursor = (cursor: string) => {
+  try {
+    const payload: unknown = JSON.parse(
+      Buffer.from(cursor, "base64url").toString("utf8"),
+    );
+    if (typeof payload !== "object" || payload === null) throw new Error();
+    const { updatedAt, stock } = payload as Record<string, unknown>;
+    if (
+      typeof updatedAt !== "number" ||
+      !Number.isFinite(updatedAt) ||
+      typeof stock !== "string" ||
+      !/^-?\d+$/.test(stock)
+    ) {
+      throw new Error();
+    }
+    return { updatedAt, stock: Long.fromString(stock) };
+  } catch {
+    throw new GraphQLError("Invalid stock page cursor", {
+      extensions: { code: "BAD_USER_INPUT" },
+    });
+  }
+};
+
+const encodeStockCursor = (stock: Document) =>
+  Buffer.from(
+    JSON.stringify({
+      updatedAt: stock.ts.any.upd,
+      stock: stock.stock.toString(),
+    }),
+  ).toString("base64url");
+
+const buildStockPageFilter = ({
+  channels,
+  tag,
+  after,
+  before,
+  within,
+  cursor,
+}: {
+  channels?: string[];
+  tag?: string;
+  after?: Date;
+  before?: Date;
+  within?: { ra: number; dec: number; arcsec: number };
+  cursor?: string;
+}) => {
+  const clauses: Document[] = [];
+  const timeRange = getTimeRange(after, before);
+
+  if (channels?.length && timeRange) {
+    clauses.push({
+      $or: channels.map((channel) => ({
+        channel,
+        [`ts.${channel}.upd`]: timeRange,
+      })),
+    });
+  } else {
+    if (channels?.length) clauses.push({ channel: { $in: channels } });
+    if (timeRange) clauses.push({ "ts.any.upd": timeRange });
+  }
+
+  if (tag) clauses.push({ tag });
+  if (within) {
+    const { ra, dec, arcsec } = within;
+    const radiusInRad = (Math.PI * arcsec) / 3600 / 180;
+    clauses.push({
+      "body._loc": {
+        $geoWithin: {
+          $centerSphere: { coordinates: [ra - 180, dec], radius: radiusInRad },
+        },
+      },
+    });
+  }
+
+  clauses.push({ "ts.any.upd": { $type: "number" } });
+  if (cursor) {
+    const { updatedAt, stock } = decodeStockCursor(cursor);
+    clauses.push({
+      $or: [
+        { "ts.any.upd": { $lt: updatedAt } },
+        { "ts.any.upd": updatedAt, stock: { $gt: stock } },
+      ],
+    });
+  }
+
+  if (clauses.length === 1) return clauses[0]!;
+  return { $and: clauses };
 };
 
 const getConfig = async (configId: Long) => {
@@ -172,6 +309,59 @@ export const resolvers = {
         .toArray();
       return docs;
     },
+    channels: async (
+      _: unknown,
+      { after, before }: { after?: Date; before?: Date },
+    ) => {
+      const db = await connectDb();
+      const timeRange = getTimeRange(after, before);
+      const filter = timeRange ? { "ts.any.upd": timeRange } : {};
+      const values = await db.collection("stock").distinct("channel", filter);
+      return Array.from(
+        new Set(
+          values.filter((value): value is string => typeof value === "string"),
+        ),
+      ).sort();
+    },
+    stocksPage: async (
+      _: unknown,
+      args: {
+        channels?: string[];
+        tag?: string;
+        after?: Date;
+        before?: Date;
+        within?: { ra: number; dec: number; arcsec: number };
+        cursor?: string;
+        limit?: number;
+      },
+      __: unknown,
+      info: GraphQLResolveInfo,
+    ) => {
+      const pageSize = args.limit ?? 20;
+      if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+        throw new GraphQLError("Stock page limit must be between 1 and 100", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      const db = await connectDb();
+      const docs = await db
+        .collection("stock")
+        .find(buildStockPageFilter(args), {
+          projection: buildStockPageProjection(info),
+        })
+        .sort({ "ts.any.upd": -1, stock: 1 })
+        .limit(pageSize + 1)
+        .toArray();
+      const hasNextPage = docs.length > pageSize;
+      const items = docs.slice(0, pageSize);
+      const lastItem = items.at(-1);
+      return {
+        items,
+        nextCursor:
+          hasNextPage && lastItem ? encodeStockCursor(lastItem) : null,
+      };
+    },
   },
   JSONObject: JSONObjectResolver,
   Long: BSONLongResolver,
@@ -242,7 +432,9 @@ export const resolvers = {
     ) => {
       if (!parent.doc) return null;
       const oid =
-        parent.doc.constructor.name === "ObjectId"
+        // can't use instanceof here, because mongodb driver uses require() and
+        // we use import, so have different ideas of what ObjetctId ctor is
+        parent.doc._bsontype == "ObjectId"
           ? parent.doc
           : ObjectId.createFromHexString(parent.doc.buffer.toHex());
       const db = await connectDb();

@@ -83,7 +83,7 @@ type T2Document {
   config: JSONObject
   stock: Long!
   link: LinkedDocument
-  col: Int
+  col: String
   code: DocumentCode
   meta: [MetaRecord]
   body: JSONObject
@@ -132,6 +132,11 @@ type Stock {
   body: JSONObject
 }
 
+type StockPage {
+  items: [Stock!]!
+  nextCursor: String
+}
+
 input Cone {
   "Right ascension in degrees"
   ra: Float!
@@ -146,6 +151,10 @@ type Query {
   stock(stock: Long!): Stock
   "Fetch multiple stock documents by channel, tag, location, and time range"
   stocks(channel: String, tag: String, after: DateTime, before: DateTime, within: Cone, limit: Int): [Stock]
+  "Fetch distinct channels represented by stocks updated in a time range"
+  channels(after: DateTime, before: DateTime): [String!]!
+  "Fetch a page of stocks, matching any selected channel"
+  stocksPage(channels: [String!], tag: String, after: DateTime, before: DateTime, within: Cone, cursor: String, limit: Int = 20): StockPage!
 }
 
 `;
