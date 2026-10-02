@@ -84,7 +84,7 @@ interface JournalRecord {
   tier: number;
   unit: string;
   ts: number;
-  doc: Binary | null;
+  doc: Binary | ObjectId | null;
 }
 
 interface MetaRecord {
@@ -121,12 +121,14 @@ export const resolvers = {
         tag,
         after,
         before,
+        within,
         limit,
       }: {
         channel?: string;
         tag?: string;
         after?: Date;
         before?: Date;
+        within?: { ra: number; dec: number; arcsec: number };
         limit?: number;
       },
       __: unknown,
@@ -150,6 +152,18 @@ export const resolvers = {
         if (before) {
           filter[key].$lte = before.getTime() / 1000;
         }
+      }
+      if (within) {
+        const { ra, dec, arcsec } = within;
+        const radiusInRad = (Math.PI * arcsec) / 3600 / 180; // convert arcseconds to radians
+        filter["body._loc"] = {
+          $geoWithin: {
+            $centerSphere: {
+              coordinates: [ra - 180, dec],
+              radius: radiusInRad,
+            },
+          },
+        };
       }
       const docs = await db
         .collection("stock")
@@ -227,7 +241,10 @@ export const resolvers = {
       info: GraphQLResolveInfo,
     ) => {
       if (!parent.doc) return null;
-      const oid = ObjectId.createFromHexString(parent.doc.buffer.toHex());
+      const oid =
+        parent.doc.constructor.name === "ObjectId"
+          ? parent.doc
+          : ObjectId.createFromHexString(parent.doc.buffer.toHex());
       const db = await connectDb();
       const doc = await db.collection("t2").findOne(
         { _id: oid },

@@ -132,9 +132,20 @@ type Stock {
   body: JSONObject
 }
 
+input Cone {
+  "Right ascension in degrees"
+  ra: Float!
+  "Declination in degrees"
+  dec: Float!
+  "Radius in arcseconds"
+  arcsec: Float!
+}
+
 type Query {
+  "Fetch a single stock document by its identifier"
   stock(stock: Long!): Stock
-  stocks(channel: String, tag: String, after: DateTime, before: DateTime, limit: Int): [Stock]
+  "Fetch multiple stock documents by channel, tag, location, and time range"
+  stocks(channel: String, tag: String, after: DateTime, before: DateTime, within: Cone, limit: Int): [Stock]
 }
 
 `;
