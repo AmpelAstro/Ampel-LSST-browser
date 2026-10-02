@@ -548,6 +548,7 @@ The sidebar shows pickers for the search constraints. These pickers are intercon
 - Channel (channel):
   - defaults to "all" (no constraint)
   - multi-selection check boxes
+  - when multiple channels are selected, include stocks matching any selected channel (OR)
   - values populated from stocks in the selected time range
 - Location (within):
   - text box for ra, dec, defaults to empty
@@ -560,16 +561,17 @@ The sidebar shows pickers for the search constraints. These pickers are intercon
   - validation rules:
     - must be a float > 0 and < 100
 
-The main panel shows one row for each element returned by stocks(). The columns are:
+The main panel shows one row for each stock returned by the paginated GraphQL query. Load the first 20 results, then fetch each next batch of 20 just before the user scrolls to it (infinite scroll). The columns are:
 
 - id: populate from stock (display as a span across all columns at the top of the row)
 - more: chiclet-style links to other brokers/surveys. This should cover the left 1/4 of the panel, with an appropriate minimum width for mobile devices. The elements are:
   - Lasair: <https://lasair.lsst.ac.uk/objects/{id}/>
   - Fink: <https://lsst.fink-portal.org/{id}>
   - Alerce: <https://lsst.alerce.online/object/{id}?survey=lsst&page=1&page_size=20&count=false&selected_oid={id}>
-  - Catalog matches: one chiclet for each populated key of the body of the last T2CatalogMatch doc listed in the stock journal. No link for now.
+  - Catalog matches: one chiclet for each key in the body object of the last T2CatalogMatch doc listed in the stock journal, where the body object has at least one key. No link for now.
 - light curve plot, spanning the remainder of the panel width. the points come from the bodies of the datapoints referred to in the stock journal
-  - x: midpointMjdTai, (an MJD in the TAI time scale), converted to a date. use only one point per `visit`.
+  - x: midpointMjdTai, an MJD in the TAI time scale, converted to a UTC date.
+  - use only one point per `visit`: ignore datapoints tagged `LSST_OBJ`; when a visit has both `LSST_DP` and `LSST_FP` points, prefer `LSST_DP`. If multiple `LSST_DP` points share a visit, use the one with the smallest `psfFluxErr`.
   - y: psfFlux (unit: nJy)
   - yerr: psfFluxErr.
   - use a different symbol for each band
