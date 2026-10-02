@@ -1,0 +1,36 @@
+#!/bin/bash
+
+namespace="lsst-ampel-dev"
+cluster="$namespace-mongo"
+replica="0"
+
+BASE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+while getopts ":n:r:c:" opt; do
+	case "$opt" in
+		n) namespace="$OPTARG" ;;
+		r) replica="$OPTARG" ;;
+		c) cluster="$OPTARG" ;;
+		*) echo "Usage: $0 [-n namespace] [-r replica] [-c cluster] -- command" >&2
+		   exit 1 ;;
+	esac
+done
+
+shift $((OPTIND - 1))
+
+credentials=$(kubectl get -n "$namespace" "secrets/${cluster}-admin-superuser" -o json | jq -r '.data | "\(.username|@base64d|@uri):\(.password|@base64d|@uri)"')
+port=$("$BASE/get_local_port")
+
+export MONGODB_URI="mongodb://${credentials}@localhost:${port}/admin?directConnection=true"
+
+kubectl port-forward -n "$namespace" "${cluster}-${replica}" "${port}:27017" &
+port_forward_pid=$!
+
+cleanup() {
+	kill "$port_forward_pid" 2>/dev/null
+	wait "$port_forward_pid" 2>/dev/null
+}
+
+trap cleanup SIGINT SIGTERM
+
+"${@}"
