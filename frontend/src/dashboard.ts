@@ -23,7 +23,7 @@ interface LinkedDocument {
   dps?: DataPoint[] | null;
 }
 
-interface JournalRecord {
+export interface JournalRecord {
   doc?: {
     body?: Record<string, unknown> | null;
     link?: LinkedDocument | null;

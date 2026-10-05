@@ -26,7 +26,9 @@
     "graphql-scalars": "^2.0.0",
     "mongodb": "^7.6.0",
     "plotly.js-dist-min": "^4.1.1",
-    "vue": "^3.5.43"
+    "vue": "^3.5.43",
+    "vue-json-pretty": "^2.6.0",
+    "vue-router": "^5.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

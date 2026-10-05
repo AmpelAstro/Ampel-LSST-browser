@@ -104,6 +104,12 @@ type JournalRecord {
   unit: String
   duration: Float
   doc: T2Document
+  "Bit flags describing the actions performed; may exceed 32 bits"
+  action: Float
+  "Identifier of the alert that triggered this record"
+  alert: String
+  target_name: String
+  observation_reason: String
 }
 
 type MetaRecord {

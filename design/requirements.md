@@ -12,6 +12,226 @@ Data are split into several collections, each with its own document type:
 
 A stock document represents an underlying object, in this case an astronomical transient at a certain point on the sky. Other documents are tied to it via a stock id. It contains a journal recording acitivities related to the stock, as well as a body that for the moment only records the location. In addition it records channels (selections that include the stock) and tags (freeform strings that denote some property), as well as a record of the unix epoch when the document was last updated (upd.any, upd.CHANNEL_A, upd.CHANNEL_B, etc).
 
+Example:
+
+```javascript
+{
+  _id: ObjectId('6aba554e2e85017a3b5afd76'),
+  stock: Long('170631029174304932'),
+  channel: [ 'HU_VRO_INFANT', 'HU_VRO_EXTRAGALACTIC' ],
+  journal: [
+    {
+      ts: 1790596176,
+      run: 340,
+      tier: 0,
+      channel: [ 'HU_VRO_INFANT', 'HU_VRO_EXTRAGALACTIC' ],
+      alert: Long('170666225526898942'),
+      alert_ts: Long('1790596174426'),
+      alert_topic: 'lsst-ampel-dev-alerts',
+      alert_part: 34,
+      alert_offset: 78,
+      action: 335610113,
+      traceid: {
+        alertconsumer: 0,
+        shaper: 0,
+        muxer: Long('2321105737850528525'),
+        combiner: Long('7576842588195436771')
+      },
+      upsert: [
+        Long('-8152178723445687221'),
+        Long('-1708687115151907311'),
+        Long('-299794374523191848'),
+        Long('-8284465579575725856')
+      ],
+      link: 1634271212
+    },
+    {
+      ts: 1790596176,
+      run: 340,
+      tier: 0,
+      channel: [ 'HU_VRO_INFANT', 'HU_VRO_EXTRAGALACTIC' ],
+      alert: Long('170666225526898942'),
+      alert_ts: Long('1790596174426'),
+      alert_topic: 'lsst-ampel-dev-alerts',
+      alert_part: 34,
+      alert_offset: 78,
+      action: 335610113,
+      traceid: {
+        alertconsumer: 0,
+        shaper: 0,
+        muxer: Long('2321105737850528525'),
+        combiner: Long('7576842588195436771')
+      },
+      upsert: [
+        Long('-8152178723445687221'),
+        Long('-1708687115151907311'),
+        Long('-299794374523191848'),
+        Long('-8284465579575725856')
+      ],
+      link: 1634271212
+    },
+    {
+      ts: 1790673667,
+      run: 478,
+      tier: 0,
+      channel: [ 'HU_VRO_INFANT', 'HU_VRO_EXTRAGALACTIC' ],
+      alert: Long('170666225526898942'),
+      alert_ts: Long('1790673522359'),
+      alert_topic: 'lsst-ampel-dev-alerts',
+      alert_part: 12,
+      alert_offset: 37,
+      action: 335610112,
+      traceid: {
+        alertconsumer: 0,
+        shaper: 0,
+        muxer: Long('2321105737850528525'),
+        combiner: Long('7576842588195436771')
+      },
+      link: 1634271212
+    },
+    {
+      ts: 1790673678,
+      run: 478,
+      tier: 0,
+      channel: [ 'HU_VRO_INFANT', 'HU_VRO_EXTRAGALACTIC' ],
+      alert: Long('170666225679991042'),
+      alert_ts: Long('1790673522672'),
+      alert_topic: 'lsst-ampel-dev-alerts',
+      alert_part: 34,
+      alert_offset: 200,
+      action: 335610113,
+      traceid: {
+        alertconsumer: 0,
+        shaper: 0,
+        muxer: Long('2321105737850528525'),
+        combiner: Long('7576842588195436771')
+      },
+      upsert: [ Long('-3922189398093852844'), Long('2414961007414208419') ],
+      link: -1073634091
+    },
+    {
+      tier: 2,
+      ts: 1790673745,
+      process: 't2',
+      run: 531,
+      action: 4456448,
+      channel: 'HU_VRO_EXTRAGALACTIC',
+      unit: 'T2RunParsnipRiseDecline',
+      doc: ObjectId('6abb8369add6a9683387ce7b'),
+      traceid: {
+        t2worker: Long('352512864310312668'),
+        t2unit: Long('-1381180547580621596')
+      },
+      extra: { link: -1073634091 }
+    },
+    {
+      tier: 2,
+      ts: 1790673745,
+      process: 't2',
+      run: 531,
+      action: 4194304,
+      channel: 'HU_VRO_EXTRAGALACTIC',
+      unit: 'T2ClassificationReport',
+      doc: ObjectId('6abb8369add6a9683387ce7c'),
+      traceid: {
+        t2worker: Long('352512864310312668'),
+        t2unit: Long('-1399107450883077433')
+      },
+      extra: { skipped: true }
+    },
+    {
+      tier: 2,
+      ts: 1790673745,
+      process: 't2',
+      run: 531,
+      action: 262144,
+      channel: 'HU_VRO_INFANT',
+      unit: 'T2TabulatorRiseDecline',
+      doc: ObjectId('6abb8369add6a9683387ce7d'),
+      traceid: {
+        t2worker: Long('352512864310312668'),
+        t2unit: Long('979348525298082316')
+      }
+    },
+    {
+      tier: 2,
+      ts: 1790673745,
+      process: 't2',
+      run: 531,
+      action: 262144,
+      channel: 'HU_VRO_INFANT',
+      unit: 'T2DigestRedshifts',
+      doc: ObjectId('6abb8369add6a9683387ce7e'),
+      traceid: {
+        t2worker: Long('352512864310312668'),
+        t2unit: Long('2907191920656695683')
+      }
+    },
+    {
+      tier: 2,
+      ts: 1790673745,
+      process: 't2',
+      run: 531,
+      action: 4194304,
+      channel: 'HU_VRO_INFANT',
+      unit: 'T2InfantReport',
+      doc: ObjectId('6abb8369add6a9683387ce7f'),
+      traceid: {
+        t2worker: Long('352512864310312668'),
+        t2unit: Long('-7461031247905764326')
+      },
+      extra: { skipped: true }
+    },
+    {
+      ts: 1790882348,
+      run: 2915,
+      tier: 0,
+      channel: [ 'HU_VRO_EXTRAGALACTIC', 'HU_VRO_INFANT' ],
+      alert: Long('170666225679991042'),
+      observation_reason: 'pairs_ri_33.0',
+      target_name: 'lowdust',
+      action: 335610112,
+      traceid: {
+        alertconsumer: 0,
+        shaper: 0,
+        muxer: Long('-8658942860987816988'),
+        combiner: Long('7178314030588326297')
+      },
+      link: -1073634091
+    },
+    {
+      ts: 1790882233,
+      run: 2898,
+      tier: 0,
+      channel: [ 'HU_VRO_EXTRAGALACTIC', 'HU_VRO_INFANT' ],
+      alert: Long('170666225526898942'),
+      observation_reason: 'pairs_ri_33.0',
+      target_name: 'lowdust',
+      action: 335610112,
+      traceid: {
+        alertconsumer: 0,
+        shaper: 0,
+        muxer: Long('-8658942860987816988'),
+        combiner: Long('7178314030588326297')
+      },
+      link: -1073634091
+    }
+  ],
+  tag: [ 'LSST' ],
+  ts: {
+    HU_VRO_EXTRAGALACTIC: { tied: 1790596176, upd: 1790882348 },
+    HU_VRO_INFANT: { tied: 1790596176, upd: 1790882348 },
+    any: { tied: 1790596176, upd: 1790882348 }
+  },
+  body: {
+    _loc: {
+      type: 'Point',
+      coordinates: [ 29.766986235402612, -6.65177314638817 ]
+    }
+  }
+}
+```
+
 ### T0 doc (DataPoint)
 
 an individual observation, with freeform body, channel, and tags. While the body is freeform, the set of fields is effectively fixed. It represents a flux of photons measured at some point in the sky at a point in time, calculated from the difference between a new image and a reference image of the long-term average flux from that point. This lets you see all manner of transient phenomena like variable stars, supernovae, active galactic nuclei, tidal disruption of stars, etc, but also a lot of junk: asteroids, satellites, subtraction artifacts. Here's an example:
@@ -583,6 +803,15 @@ The main panel shows one row for each stock returned by the paginated GraphQL qu
     - z: brown
     - y: pink
   - do not connect the points with lines
+
+#### Object
+
+Route `/stock/{id}`, spanning the full page width. Data comes from the stock() graphql query. Links to it from the Recent view's stock ids.
+
+- The top of the view is the same stock-row element used in the Recent view.
+- Below it, journal entries are listed in reverse order. Every entry shows its `action` decomposed into the named flags (T0, T1, T2, T3, STOCK, and CLI/OPS groups, bits 0 to 38).
+  - tier 2: unit, channel, `ts` as a time delta from now, and the document body rendered with vue-json-pretty.
+  - tier 0: alert id, target_name, observation_reason, and channel(s).
 
 # Task
 

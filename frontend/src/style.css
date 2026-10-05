@@ -785,6 +785,119 @@ a {
   animation: spin 700ms linear infinite;
 }
 
+.object-layout {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  padding: 24px clamp(18px, 3.2vw, 52px) 48px;
+}
+.back-link {
+  justify-self: start;
+  color: var(--forest);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-decoration: none;
+}
+.back-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.journal h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 8px 0 14px;
+  font-size: 22px;
+  font-weight: 500;
+}
+.journal-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.journal-entry {
+  display: grid;
+  gap: 10px;
+  padding: 12px 15px;
+  background: var(--paper);
+  border: 1px solid #d9e2dc;
+  border-radius: 6px;
+}
+.journal-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.tier-badge {
+  padding: 3px 6px;
+  color: #fff;
+  background: var(--forest);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.07em;
+}
+.journal-unit {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+.journal-time {
+  margin-left: auto;
+  color: #849289;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.journal-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 0;
+}
+.journal-fields > div {
+  display: grid;
+  gap: 4px;
+}
+.journal-fields dt {
+  color: #849289;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.07em;
+}
+.journal-fields dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.flag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.flag-chip {
+  padding: 4px 6px;
+  color: #3f5e4d;
+  background: #f1f5f1;
+  border: 1px solid #dfe8e1;
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 8px;
+  white-space: nowrap;
+}
+.journal-body {
+  max-height: 360px;
+  padding: 8px 10px;
+  overflow: auto;
+  font-size: 11px;
+  background: #fff;
+  border: 1px solid #e4eae5;
+  border-radius: 4px;
+}
+
 @keyframes pulse {
   50% {
     opacity: 0.35;

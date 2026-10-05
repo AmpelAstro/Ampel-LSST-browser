@@ -222,6 +222,9 @@ interface JournalRecord {
   unit: string;
   ts: number;
   doc: Binary | ObjectId | null;
+  channel?: string | string[] | null;
+  action?: number | { toNumber(): number } | null;
+  alert?: { toString(): string } | null;
 }
 
 interface MetaRecord {
@@ -456,6 +459,18 @@ export const resolvers = {
       if (!parent.ts) return null;
       return new Date(parent.ts * 1000);
     },
+    // tier 2 records store a single channel string, tier 0 a list
+    channel: (parent: JournalRecord) => {
+      if (parent.channel == null) return [];
+      return Array.isArray(parent.channel) ? parent.channel : [parent.channel];
+    },
+    action: (parent: JournalRecord) => {
+      if (parent.action == null) return null;
+      return typeof parent.action === "number"
+        ? parent.action
+        : parent.action.toNumber();
+    },
+    alert: (parent: JournalRecord) => parent.alert?.toString() ?? null,
   },
   MetaRecord: {
     ts: (parent: MetaRecord) => {
