@@ -1,5 +1,5 @@
 {
-  "name": "ampel-graphql",
+  "name": "ampel-lsst-browser",
   "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./dist/src/*.d.ts",
