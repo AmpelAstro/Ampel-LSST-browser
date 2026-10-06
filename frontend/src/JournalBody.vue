@@ -61,6 +61,7 @@ function numericSeries(value: unknown): { labels: string[]; values: number[] } {
 const catalogEntries = computed(() =>
   Object.entries(props.body ?? {}).filter(([, value]) => value !== null),
 );
+const tabulatorEntries = computed(() => Object.entries(props.body ?? {}));
 
 const classifications = computed(() => {
   const value = props.body?.classifications;
@@ -131,6 +132,17 @@ const predictionMetrics = [
     <span v-if="!catalogEntries.length" class="no-catalog">No matches</span>
   </div>
 
+  <div v-else-if="unit === 'T2TabulatorRiseDecline'" class="journal-body">
+    <table class="catalog-value-table tabulator-value-table">
+      <tbody>
+        <tr v-for="[key, value] in tabulatorEntries" :key="key">
+          <th scope="row">{{ key }}</th>
+          <td>{{ formatValue(value) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <div v-else-if="unit === 'T2RunParsnipRiseDecline'" class="parsnip-body">
     <article
       v-for="classification in classifications"
@@ -164,7 +176,7 @@ const predictionMetrics = [
         </span>
         <span
           v-if="
-            classification.prediction?.model_dof > 0 &&
+            Number(classification.prediction?.model_dof) > 0 &&
             classification.prediction?.model_chisq != null
           "
           class="data-chip"
