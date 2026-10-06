@@ -27,6 +27,13 @@ FROM dhi.io/node:26-alpine3.24 AS runner
 
 ENV PATH=/app/node_modules/.bin:$PATH
 
+ENV GRAPHQL_PORT=4000
+ENV GRAPHQL_HOST=
+ENV GRAPHQL_PATH=/
+
+ENV MONGODB_URI=mongodb://localhost:27017/
+ENV MONGODB_DB=ampel
+
 WORKDIR /app
 
 COPY --from=deps --chown=node:node /app/node_modules ./node_modules
