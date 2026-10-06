@@ -1,11 +1,11 @@
 {
-  "include": ["src/**/*"],
+  "include": ["backend/src/**/*"],
   "exclude": ["node_modules", "dist"],
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "./src",
-    "outDir": "./dist",
+    "rootDir": "./backend/src",
+    "outDir": "./dist/backend",
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "esnext",

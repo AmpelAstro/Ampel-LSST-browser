@@ -4,12 +4,12 @@
   "main": "./dist/index.js",
   "types": "./dist/src/*.d.ts",
   "scripts": {
-    "build": "npm run build:server && npm run build:frontend",
-    "build:server": "tsc",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "tsc --project tsconfig.backend.json",
     "build:frontend": "vue-tsc --noEmit -p frontend/tsconfig.json && vite build --config frontend/vite.config.ts",
     "start": "node dist/index.js",
     "dev": "scripts/forward_to_remote -- tsx watch src/index.ts",
-    "dev:server": "tsx watch src/index.ts",
+    "dev:backend": "tsx watch backend/src/index.ts",
     "dev:frontend": "vite --config frontend/vite.config.ts --host 0.0.0.0"
   },
   "keywords": [],

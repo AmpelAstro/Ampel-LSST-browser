@@ -41,13 +41,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
-      # - name: Smoke test
-      #   run: |
-      #     container=$(docker run -d "${{ steps.docker_build.outputs.imageid }}")
-      #     sleep 1
-      #     docker stop -s INT -t 5 $container
-      #     docker logs $container
-      #     exit $(docker wait $container)
+      - name: Smoke test
+        run: |
+          container=$(docker run -d "${{ steps.docker_build.outputs.imageid }}")
+          sleep 1
+          docker stop -s INT -t 5 $container
+          docker logs $container
+          exit $(docker wait $container)
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6

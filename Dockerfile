@@ -10,7 +10,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 # Copy the source code into the container and compile TypeScript.
 COPY . .
-RUN npm run build
+RUN npm run build:backend
 
 # Deps stage: install production dependencies only.
 FROM dhi.io/node:26-alpine3.24-dev AS deps
@@ -30,7 +30,7 @@ ENV PATH=/app/node_modules/.bin:$PATH
 WORKDIR /app
 
 COPY --from=deps --chown=node:node /app/node_modules ./node_modules
-COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --from=builder --chown=node:node /app/dist/backend ./dist
 
 # Expose the port that the application listens on.
 EXPOSE 4000
