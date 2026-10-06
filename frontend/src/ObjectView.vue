@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import VueJsonPretty from "vue-json-pretty";
-import "vue-json-pretty/lib/styles.css";
-// harmonize font family with the rest of the app
-import "./vjs-tree-style.css";
+import JournalBody from "./JournalBody.vue";
 import StockRow from "./StockRow.vue";
 import { decodeActionFlags, formatTimeDelta } from "./actions";
 import type { JournalRecord, StockResult } from "./dashboard";
@@ -240,16 +237,11 @@ watch(() => props.id, load, { immediate: true });
               >
             </div>
 
-            <div v-if="entry.tier === 2" class="journal-body">
-              <VueJsonPretty
-                v-if="entry.doc?.body"
-                :data="entry.doc.body"
-                :show-double-quotes="false"
-                :show-length="true"
-                :deep="1"
-              />
-              <span v-else class="no-catalog">No body</span>
-            </div>
+            <JournalBody
+              v-if="entry.tier === 2"
+              :unit="entry.unit"
+              :body="entry.doc?.body ?? null"
+            />
           </li>
         </ol>
       </section>

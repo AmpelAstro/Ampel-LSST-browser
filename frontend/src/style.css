@@ -926,6 +926,127 @@ a {
   font-size: 8px;
   white-space: nowrap;
 }
+.catalog-match-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+.catalog-match-card {
+  width: max-content;
+  max-width: 100%;
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid #d9e2dc;
+  border-radius: 5px;
+}
+.catalog-match-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 8px 10px;
+  color: var(--forest-deep);
+  background: #f1f5f1;
+  border-bottom: 1px solid #dfe8e1;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.catalog-match-title span {
+  color: #785f21;
+  white-space: nowrap;
+}
+.catalog-value-table {
+  width: auto;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+.catalog-value-table th,
+.catalog-value-table td {
+  max-width: min(520px, 70vw);
+  padding: 5px 10px;
+  border-bottom: 1px solid #edf1ee;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.catalog-value-table th {
+  color: #718078;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.catalog-value-table tr:last-child th,
+.catalog-value-table tr:last-child td {
+  border-bottom: 0;
+}
+.parsnip-body {
+  display: grid;
+  gap: 10px;
+}
+.parsnip-classification {
+  display: grid;
+  grid-template-columns: minmax(220px, 340px) minmax(220px, 1fr);
+  align-items: center;
+  gap: 8px 16px;
+  max-width: 760px;
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px solid #d9e2dc;
+  border-radius: 5px;
+}
+.parsnip-classification-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  grid-column: 1 / -1;
+  font-size: 11px;
+}
+.parsnip-radar {
+  width: 100%;
+  min-width: 0;
+  height: 250px;
+}
+.data-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 6px;
+}
+.data-chip {
+  display: grid;
+  gap: 4px;
+  min-width: 100px;
+  padding: 7px 9px;
+  background: #f1f5f1;
+  border: 1px solid #dfe8e1;
+  border-radius: 4px;
+}
+.data-chip > span {
+  color: #849289;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.07em;
+}
+.data-chip strong {
+  color: var(--forest-deep);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+.raw-body-disclosure {
+  max-width: 100%;
+  border-top: 1px solid var(--rule);
+}
+.raw-body-disclosure summary {
+  padding: 8px 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.07em;
+}
 .journal-body {
   max-height: 360px;
   padding: 8px 10px;
