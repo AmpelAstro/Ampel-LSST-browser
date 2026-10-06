@@ -77,6 +77,10 @@ a {
   font-family: var(--mono);
   font-size: 12px;
 }
+.wordmark-icon img {
+  max-width: 20px;
+  height: auto;
+}
 .wordmark-divider {
   padding: 0 4px;
   color: #9fbead;

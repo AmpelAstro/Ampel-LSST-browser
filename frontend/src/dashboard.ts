@@ -181,6 +181,9 @@ export function lightCurvePoints(stock: StockResult): PhotometryPoint[] {
 export function catalogKeys(stock: StockResult): string[] {
   const lastBody = asRecord(stock.catalogMatches?.at(-1)?.doc?.body);
   return lastBody && Object.keys(lastBody).length > 0
-    ? Object.keys(lastBody)
+    ? Object.entries(lastBody)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        .filter(([_, value]) => value !== null)
+        .map(([key]) => key)
     : [];
 }
