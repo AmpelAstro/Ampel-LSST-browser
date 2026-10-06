@@ -807,9 +807,47 @@ a {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  margin: 8px 0 14px;
+  margin: 0;
   font-size: 22px;
   font-weight: 500;
+}
+.journal-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 18px;
+  margin: 8px 0 14px;
+}
+.journal-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.journal-filters .channel-option {
+  min-height: 29px;
+}
+.unit-filter {
+  display: flex;
+  min-width: min(160px, 100%);
+}
+.unit-filter .form-select {
+  min-height: 30px;
+  color: var(--ink);
+  background-color: #fff;
+  border-color: #d5dfd8;
+  border-radius: 4px;
+  box-shadow: none;
+  font-family: var(--mono);
+  font-size: 9px;
+}
+.unit-filter .form-select:focus {
+  border-color: #7b9d87;
+  box-shadow: 0 0 0 3px rgba(35, 91, 71, 0.09);
+}
+.unit-filter-disabled {
+  opacity: 0.55;
 }
 .journal-list {
   display: grid;

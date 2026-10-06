@@ -58,8 +58,32 @@ const data = ref<StockData["stock"]>(null);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const loadedAt = ref(Date.now());
+const showTier0 = ref(true);
+const showTier2 = ref(true);
+const selectedUnit = ref("all");
 
 const entries = computed(() => [...(data.value?.journal ?? [])].reverse());
+const t2Units = computed(() =>
+  [
+    ...new Set(
+      entries.value.flatMap((entry) =>
+        entry.tier === 2 && entry.unit ? [entry.unit] : [],
+      ),
+    ),
+  ].sort(),
+);
+const filteredEntries = computed(() =>
+  entries.value.filter((entry) => {
+    if (entry.tier === 0) return showTier0.value;
+    if (entry.tier === 2) {
+      return (
+        showTier2.value &&
+        (selectedUnit.value === "all" || entry.unit === selectedUnit.value)
+      );
+    }
+    return true;
+  }),
+);
 
 const stockRow = computed<StockResult | null>(() => {
   if (!data.value) return null;
@@ -121,13 +145,45 @@ watch(() => props.id, load, { immediate: true });
       <StockRow :stock="stockRow" :link-to-object="false" />
 
       <section class="journal" aria-label="Journal">
-        <h2>
-          Journal
-          <span class="result-count">{{ entries.length }} entries</span>
-        </h2>
+        <div class="journal-toolbar">
+          <h2>
+            Journal
+            <span class="result-count"
+              >{{ filteredEntries.length }} / {{ entries.length }} entries</span
+            >
+          </h2>
+          <div class="journal-filters" aria-label="Filter journal entries">
+            <label class="channel-option">
+              <input v-model="showTier0" type="checkbox" />
+              <span class="checkmark"></span>
+              <span>T0</span>
+            </label>
+            <label class="channel-option">
+              <input v-model="showTier2" type="checkbox" />
+              <span class="checkmark"></span>
+              <span>T2</span>
+            </label>
+            <label
+              class="unit-filter"
+              :class="{ 'unit-filter-disabled': !showTier2 }"
+            >
+              <select
+                v-model="selectedUnit"
+                class="form-select"
+                aria-label="Filter T2 entries by unit"
+                :disabled="!showTier2"
+              >
+                <option value="all">All units</option>
+                <option v-for="unit in t2Units" :key="unit" :value="unit">
+                  {{ unit }}
+                </option>
+              </select>
+            </label>
+          </div>
+        </div>
         <ol class="journal-list">
           <li
-            v-for="(entry, index) in entries"
+            v-for="(entry, index) in filteredEntries"
             :key="index"
             class="journal-entry"
           >
