@@ -9,7 +9,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 # Copy the source code into the container and compile TypeScript.
 COPY . .
-RUN npm run build:frontend
+RUN npm run build:frontend:prod
 
 FROM lipanski/docker-static-website:2.6.0
 
