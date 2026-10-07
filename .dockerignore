@@ -3,4 +3,4 @@
 !package-lock.json
 !tsconfig.backend.json
 !backend/src
-!dist/web
+!frontend/
