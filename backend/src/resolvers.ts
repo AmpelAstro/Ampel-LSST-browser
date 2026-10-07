@@ -434,25 +434,24 @@ export const resolvers = {
       info: GraphQLResolveInfo,
     ) => {
       if (!parent.doc) return null;
-      const oid =
+      const match =
         // can't use instanceof here, because mongodb driver uses require() and
         // we use import, so have different ideas of what ObjetctId ctor is
         parent.doc._bsontype == "ObjectId"
-          ? parent.doc
-          : ObjectId.createFromHexString(parent.doc.buffer.toHex());
+          ? { _id: parent.doc }
+          : parent.doc._bsontype == "Binary"
+            ? { _id: ObjectId.createFromHexString(parent.doc.buffer.toHex()) }
+            : parent.doc;
       const db = await connectDb();
-      const doc = await db.collection("t2").findOne(
-        { _id: oid },
-        {
-          projection: {
-            ...buildProjection(info),
-            col: 1,
-            stock: 1,
-            link: 1,
-            id: 1,
-          },
+      const doc = await db.collection("t2").findOne(match, {
+        projection: {
+          ...buildProjection(info),
+          col: 1,
+          stock: 1,
+          link: 1,
+          id: 1,
         },
-      );
+      });
       return doc;
     },
     ts: (parent: JournalRecord) => {
