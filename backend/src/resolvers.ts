@@ -497,14 +497,17 @@ export const resolvers = {
       const db = await connectDb();
       const trace = await db
         .collection("trace")
-        .findOne({ _id: alertConsumerId });
+        .findOne(
+          { _id: alertConsumerId },
+          { projection: { "config.directives": 1 } },
+        );
       const directives = trace?.config?.directives;
       if (!Array.isArray(directives)) return {};
 
       return Object.fromEntries(
         directives.flatMap((directive: Document) =>
           typeof directive.channel === "string"
-            ? [[directive.channel, directive.filter]]
+            ? [[directive.channel, stripNullConfigFields(directive.filter)]]
             : [],
         ),
       );

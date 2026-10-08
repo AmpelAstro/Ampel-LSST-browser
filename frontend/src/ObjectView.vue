@@ -123,13 +123,6 @@ function toggleUnitPopover(entryIndex: number) {
     activeUnitPopover.value === entryIndex ? null : entryIndex;
 }
 
-function filterConfigurationText(entry: JournalEntry, channel: string) {
-  const config = entry.filterConfigs?.[channel];
-  return config === undefined
-    ? "No filter configuration for this channel."
-    : JSON.stringify(config, null, 2) ?? String(config);
-}
-
 // collapse tabulator, t2_dependency, t2_dependency[*].config nodes in the JSON tree
 function collapseDependencyConfig(node: { path: string }) {
   return /(?:^|\.)(tabulator|t2_dependency)(\[\d+\]\.config)?$/.test(node.path);
@@ -336,7 +329,12 @@ watch(() => props.id, load, { immediate: true });
                           ×
                         </button>
                       </header>
-                      <pre>{{ filterConfigurationText(entry, channel) }}</pre>
+                      <VueJsonPretty
+                        :data="entry.filterConfigs?.[channel] ?? {}"
+                        :show-double-quotes="false"
+                        :show-length="true"
+                        :path-collapsible="collapseDependencyConfig"
+                      />
                     </div>
                   </span>
                 </dd>
