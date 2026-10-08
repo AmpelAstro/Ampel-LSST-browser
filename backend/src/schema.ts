@@ -110,6 +110,8 @@ type JournalRecord {
   alert: String
   target_name: String
   observation_reason: String
+  "Filter configurations from trace.config.directives, keyed by channel"
+  filterConfigs: JSONObject
 }
 
 type MetaRecord {

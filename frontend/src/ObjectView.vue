@@ -21,6 +21,7 @@ const stockQuery = `query Stock($stock: Long!) {
       alert
       target_name
       observation_reason
+      filterConfigs
       doc {
         body
         ${PHOTOMETRY_LINK_FIELDS}
@@ -40,6 +41,7 @@ interface JournalEntry {
   alert: string | null;
   target_name: string | null;
   observation_reason: string | null;
+  filterConfigs: Record<string, unknown> | null;
   doc: JournalDoc;
 }
 
@@ -58,6 +60,9 @@ const loadedAt = ref(Date.now());
 const showTier0 = ref(true);
 const showTier2 = ref(true);
 const selectedUnit = ref("all");
+const activeFilterPopover = ref<{ entryIndex: number; channel: string } | null>(
+  null,
+);
 
 const entries = computed(() => [...(data.value?.journal ?? [])].reverse());
 const t2Units = computed(() =>
@@ -92,6 +97,24 @@ const stockRow = computed<StockResult | null>(() => {
     catalogMatches: journal.filter((entry) => entry.unit === "T2CatalogMatch"),
   };
 });
+
+function toggleFilterPopover(entryIndex: number, channel: string) {
+  if (
+    activeFilterPopover.value?.entryIndex === entryIndex &&
+    activeFilterPopover.value.channel === channel
+  ) {
+    activeFilterPopover.value = null;
+  } else {
+    activeFilterPopover.value = { entryIndex, channel };
+  }
+}
+
+function filterConfigurationText(entry: JournalEntry, channel: string) {
+  const config = entry.filterConfigs?.[channel];
+  return config === undefined
+    ? "No filter configuration for this channel."
+    : JSON.stringify(config, null, 2) ?? String(config);
+}
 
 async function load(id: string) {
   isLoading.value = true;
@@ -141,7 +164,12 @@ watch(() => props.id, load, { immediate: true });
     <template v-else>
       <StockRow :stock="stockRow" :link-to-object="false" />
 
-      <section class="journal" aria-label="Journal">
+      <section
+        class="journal"
+        aria-label="Journal"
+        @click="activeFilterPopover = null"
+        @keydown.esc="activeFilterPopover = null"
+      >
         <div class="journal-toolbar">
           <h2>
             Journal
@@ -221,9 +249,42 @@ watch(() => props.id, load, { immediate: true });
                   <span
                     v-for="channel in entry.channel"
                     :key="channel"
-                    class="catalog-chip"
-                    >{{ channel }}</span
+                    class="filter-chip-wrap"
                   >
+                    <button
+                      type="button"
+                      class="catalog-chip filter-channel-button"
+                      :aria-expanded="
+                        activeFilterPopover?.entryIndex === index &&
+                        activeFilterPopover.channel === channel
+                      "
+                      @click.stop="toggleFilterPopover(index, channel)"
+                    >
+                      {{ channel }}
+                    </button>
+                    <div
+                      v-if="
+                        activeFilterPopover?.entryIndex === index &&
+                        activeFilterPopover.channel === channel
+                      "
+                      class="filter-popover"
+                      role="tooltip"
+                      @click.stop
+                    >
+                      <header class="filter-popover-heading">
+                        <strong>{{ channel }} filter</strong>
+                        <button
+                          type="button"
+                          class="filter-popover-close"
+                          :aria-label="`Close ${channel} filter`"
+                          @click="activeFilterPopover = null"
+                        >
+                          ×
+                        </button>
+                      </header>
+                      <pre>{{ filterConfigurationText(entry, channel) }}</pre>
+                    </div>
+                  </span>
                 </dd>
               </div>
             </dl>

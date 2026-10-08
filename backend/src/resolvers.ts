@@ -225,6 +225,7 @@ interface JournalRecord {
   channel?: string | string[] | null;
   action?: number | { toNumber(): number } | null;
   alert?: { toString(): string } | null;
+  traceid?: { alertconsumer?: Long | null } | null;
 }
 
 interface MetaRecord {
@@ -470,6 +471,25 @@ export const resolvers = {
         : parent.action.toNumber();
     },
     alert: (parent: JournalRecord) => parent.alert?.toString() ?? null,
+    filterConfigs: async (parent: JournalRecord) => {
+      const alertConsumerId = parent.traceid?.alertconsumer;
+      if (alertConsumerId == null) return {};
+
+      const db = await connectDb();
+      const trace = await db
+        .collection("trace")
+        .findOne({ _id: alertConsumerId });
+      const directives = trace?.config?.directives;
+      if (!Array.isArray(directives)) return {};
+
+      return Object.fromEntries(
+        directives.flatMap((directive: Document) =>
+          typeof directive.channel === "string"
+            ? [[directive.channel, directive.filter]]
+            : [],
+        ),
+      );
+    },
   },
   MetaRecord: {
     ts: (parent: MetaRecord) => {

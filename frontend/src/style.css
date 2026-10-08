@@ -731,6 +731,77 @@ a {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.filter-chip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.filter-channel-button {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 8px;
+}
+.filter-channel-button:focus-visible {
+  outline: 2px solid #7b9d87;
+  outline-offset: 2px;
+}
+.filter-popover {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  width: min(360px, calc(100vw - 52px));
+  max-height: 320px;
+  overflow: auto;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid #d8e1db;
+  border-radius: 5px;
+  box-shadow: 0 8px 24px rgba(23, 37, 31, 0.16);
+}
+.filter-chip-wrap:last-child .filter-popover {
+  right: 0;
+  left: auto;
+}
+.filter-popover-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  background: #f1f5f1;
+  border-bottom: 1px solid #dfe8e1;
+  font-size: 10px;
+}
+.filter-popover-heading strong {
+  font-family: var(--mono);
+  font-weight: 500;
+}
+.filter-popover-close {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  font-size: 16px;
+}
+.filter-popover-close:hover {
+  color: var(--ink);
+  background: #e4eae5;
+}
+.filter-popover pre {
+  padding: 10px;
+  margin: 0;
+  color: #3e5146;
+  font-family: var(--mono);
+  font-size: 9px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .no-catalog {
   color: #a0aaa3;
   font-size: 9px;
