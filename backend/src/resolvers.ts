@@ -154,6 +154,25 @@ const buildStockPageFilter = ({
   return { $and: clauses };
 };
 
+// strip default fields from UnitModel instances
+const stripNullConfigFields = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(stripNullConfigFields);
+  if (value === null || typeof value !== "object") return value;
+
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) return value;
+
+  const record = value as Record<string, unknown>;
+  const entries = Object.entries(record).map(
+    ([key, item]) => [key, stripNullConfigFields(item)] as const,
+  );
+
+  if (record.unit != null && record.config != null) {
+    return Object.fromEntries(entries.filter(([, item]) => item != null));
+  }
+  return Object.fromEntries(entries);
+};
+
 const getConfig = async (configId: Long) => {
   const db = await connectDb();
   const doc = await db
@@ -171,7 +190,7 @@ const getConfig = async (configId: Long) => {
       }),
     );
   }
-  return doc;
+  return stripNullConfigFields(doc);
 };
 
 // maps each enum name to its numeric DocumentCode value, so integers resolve to the matching enum member

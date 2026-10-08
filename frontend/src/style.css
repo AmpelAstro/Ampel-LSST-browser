@@ -802,6 +802,23 @@ a {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.unit-config-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.journal-unit-button {
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.journal-unit-button:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid #7b9d87;
+  outline-offset: 2px;
+}
 .no-catalog {
   color: #a0aaa3;
   font-size: 9px;

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import VueJsonPretty from "vue-json-pretty";
 import JournalBody from "./JournalBody.vue";
 import StockRow from "./StockRow.vue";
 import { decodeActionFlags, formatTimeDelta } from "./actions";
@@ -23,6 +24,7 @@ const stockQuery = `query Stock($stock: Long!) {
       observation_reason
       filterConfigs
       doc {
+        config
         body
         ${PHOTOMETRY_LINK_FIELDS}
       }
@@ -30,7 +32,11 @@ const stockQuery = `query Stock($stock: Long!) {
   }
 }`;
 
-type JournalDoc = NonNullable<JournalRecord["doc"]> | null;
+type JournalDoc =
+  | (NonNullable<JournalRecord["doc"]> & {
+      config?: Record<string, unknown> | null;
+    })
+  | null;
 
 interface JournalEntry {
   tier: number | null;
@@ -63,6 +69,7 @@ const selectedUnit = ref("all");
 const activeFilterPopover = ref<{ entryIndex: number; channel: string } | null>(
   null,
 );
+const activeUnitPopover = ref<number | null>(null);
 
 const entries = computed(() => [...(data.value?.journal ?? [])].reverse());
 const t2Units = computed(() =>
@@ -99,6 +106,7 @@ const stockRow = computed<StockResult | null>(() => {
 });
 
 function toggleFilterPopover(entryIndex: number, channel: string) {
+  activeUnitPopover.value = null;
   if (
     activeFilterPopover.value?.entryIndex === entryIndex &&
     activeFilterPopover.value.channel === channel
@@ -109,11 +117,22 @@ function toggleFilterPopover(entryIndex: number, channel: string) {
   }
 }
 
+function toggleUnitPopover(entryIndex: number) {
+  activeFilterPopover.value = null;
+  activeUnitPopover.value =
+    activeUnitPopover.value === entryIndex ? null : entryIndex;
+}
+
 function filterConfigurationText(entry: JournalEntry, channel: string) {
   const config = entry.filterConfigs?.[channel];
   return config === undefined
     ? "No filter configuration for this channel."
     : JSON.stringify(config, null, 2) ?? String(config);
+}
+
+// collapse tabulator, t2_dependency, t2_dependency[*].config nodes in the JSON tree
+function collapseDependencyConfig(node: { path: string }) {
+  return /(?:^|\.)(tabulator|t2_dependency)(\[\d+\]\.config)?$/.test(node.path);
 }
 
 async function load(id: string) {
@@ -167,8 +186,8 @@ watch(() => props.id, load, { immediate: true });
       <section
         class="journal"
         aria-label="Journal"
-        @click="activeFilterPopover = null"
-        @keydown.esc="activeFilterPopover = null"
+        @click="(activeFilterPopover = null), (activeUnitPopover = null)"
+        @keydown.esc="(activeFilterPopover = null), (activeUnitPopover = null)"
       >
         <div class="journal-toolbar">
           <h2>
@@ -215,7 +234,42 @@ watch(() => props.id, load, { immediate: true });
             <header class="journal-heading">
               <span class="tier-badge">T{{ entry.tier ?? "?" }}</span>
               <template v-if="entry.tier === 2">
-                <strong class="journal-unit">{{ entry.unit }}</strong>
+                <span class="unit-config-wrap">
+                  <button
+                    type="button"
+                    class="journal-unit journal-unit-button"
+                    :aria-expanded="activeUnitPopover === index"
+                    @click.stop="toggleUnitPopover(index)"
+                  >
+                    {{ entry.unit }}
+                  </button>
+                  <div
+                    v-if="activeUnitPopover === index"
+                    class="filter-popover unit-config-popover"
+                    role="tooltip"
+                    @click.stop
+                  >
+                    <header class="filter-popover-heading">
+                      <strong>{{ entry.unit }} configuration</strong>
+                      <button
+                        type="button"
+                        class="filter-popover-close"
+                        :aria-label="`Close ${entry.unit} configuration`"
+                        @click="activeUnitPopover = null"
+                      >
+                        ×
+                      </button>
+                    </header>
+                    <div class="unit-config-json">
+                      <VueJsonPretty
+                        :data="entry.doc?.config ?? {}"
+                        :show-double-quotes="false"
+                        :show-length="true"
+                        :path-collapsible="collapseDependencyConfig"
+                      />
+                    </div>
+                  </div>
+                </span>
                 <span class="catalog-chips">
                   <span
                     v-for="channel in entry.channel"
