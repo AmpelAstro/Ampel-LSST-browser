@@ -630,12 +630,16 @@ a {
   gap: 14px;
 }
 .stock-row {
-  overflow: hidden;
+  overflow: visible;
   background: var(--paper);
   border: 1px solid #d9e2dc;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(30, 57, 43, 0.035);
   animation: row-enter 300ms ease both;
+}
+.stock-row-popover-open {
+  position: relative;
+  z-index: 40;
 }
 .stock-heading {
   display: flex;
@@ -735,6 +739,10 @@ a {
   position: relative;
   display: inline-flex;
 }
+.catalog-chip-popover-wrap {
+  position: relative;
+  display: inline-flex;
+}
 .filter-channel-button {
   cursor: pointer;
   font-family: var(--mono);
@@ -757,6 +765,11 @@ a {
   border: 1px solid #d8e1db;
   border-radius: 5px;
   box-shadow: 0 8px 24px rgba(23, 37, 31, 0.16);
+}
+.catalog-match-popover {
+  width: max-content;
+  max-width: min(360px, calc(100vw - 52px));
+  padding: 6px;
 }
 .filter-chip-wrap:last-child .filter-popover {
   right: 0;

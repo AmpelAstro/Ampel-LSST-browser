@@ -10,5 +10,8 @@
     "typescript",
     "typescriptreact",
     "javascriptreact"
-  ]
+  ],
+  "chat.tools.terminal.autoApprove": {
+    "npx vite": true
+  }
 }

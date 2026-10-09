@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { nextTick, ref } from "vue";
 import LightCurvePlot from "./LightCurvePlot.vue";
+import JournalBody from "./JournalBody.vue";
 import { catalogKeys, lightCurvePoints, longToString } from "./dashboard";
 import type { StockResult } from "./dashboard";
 
@@ -7,6 +9,38 @@ const props = withDefaults(
   defineProps<{ stock: StockResult; index?: number; linkToObject?: boolean }>(),
   { linkToObject: true },
 );
+const activeCatalogPopover = ref<string | null>(null);
+const catalogPopoverOffset = ref(0);
+const catalogPopover = ref<HTMLElement | null>(null);
+
+async function toggleCatalogPopover(key: string, event: MouseEvent) {
+  if (activeCatalogPopover.value === key) {
+    activeCatalogPopover.value = null;
+    return;
+  }
+
+  const trigger = event.currentTarget as HTMLElement;
+  const triggerLeft = trigger.getBoundingClientRect().left;
+  activeCatalogPopover.value = key;
+  await nextTick();
+
+  const popoverWidth = catalogPopover.value?.getBoundingClientRect().width ?? 0;
+  const viewportLeft = Math.min(
+    Math.max(triggerLeft, 16),
+    Math.max(16, window.innerWidth - popoverWidth - 16),
+  );
+  catalogPopoverOffset.value = viewportLeft - triggerLeft;
+}
+
+function catalogMatchBodies(key: string): Array<Record<string, unknown>> {
+  const bodies: Array<Record<string, unknown>> = [];
+  for (const match of props.stock.catalogMatches ?? []) {
+    const body = match.doc?.body;
+    if (!body || !Object.hasOwn(body, key) || body[key] === null) continue;
+    bodies.push({ [key]: body[key] });
+  }
+  return bodies;
+}
 
 function brokerLinks() {
   const id = encodeURIComponent(longToString(props.stock.stock));
@@ -22,7 +56,12 @@ function brokerLinks() {
 </script>
 
 <template>
-  <article class="stock-row">
+  <article
+    class="stock-row"
+    :class="{ 'stock-row-popover-open': activeCatalogPopover !== null }"
+    @click="activeCatalogPopover = null"
+    @keydown.esc="activeCatalogPopover = null"
+  >
     <header class="stock-heading">
       <span class="object-label">OBJECT</span>
       <router-link
@@ -67,9 +106,32 @@ function brokerLinks() {
           <span
             v-for="key in catalogKeys(stock)"
             :key="key"
-            class="catalog-chip"
-            >{{ key }}</span
+            class="catalog-chip-popover-wrap"
           >
+            <button
+              type="button"
+              class="catalog-chip filter-channel-button"
+              :aria-expanded="activeCatalogPopover === key"
+              @click.stop="toggleCatalogPopover(key, $event)"
+            >
+              {{ key }}
+            </button>
+            <div
+              v-if="activeCatalogPopover === key"
+              ref="catalogPopover"
+              class="filter-popover catalog-match-popover"
+              :style="{ left: `${catalogPopoverOffset}px` }"
+              role="tooltip"
+              @click.stop
+            >
+              <JournalBody
+                v-for="(body, index) in catalogMatchBodies(key)"
+                :key="index"
+                unit="T2CatalogMatch"
+                :body="body"
+              />
+            </div>
+          </span>
           <span v-if="!catalogKeys(stock).length" class="no-catalog"
             >No matches</span
           >
