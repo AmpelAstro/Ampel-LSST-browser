@@ -38,6 +38,14 @@ type JournalDoc =
     })
   | null;
 
+type JsonData =
+  | string
+  | number
+  | boolean
+  | unknown[]
+  | Record<string, unknown>
+  | null;
+
 interface JournalEntry {
   tier: number | null;
   ts: string | null;
@@ -47,7 +55,7 @@ interface JournalEntry {
   alert: string | null;
   target_name: string | null;
   observation_reason: string | null;
-  filterConfigs: Record<string, unknown> | null;
+  filterConfigs: Record<string, JsonData> | null;
   doc: JournalDoc;
 }
 
