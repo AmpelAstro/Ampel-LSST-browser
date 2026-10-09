@@ -65,6 +65,27 @@ const getTimeRange = (after?: Date, before?: Date): Document | undefined => {
   return range;
 };
 
+type StockPageSelection = "REPORTED_TRANSIENTS";
+type StockPageSelectionFilter = (channels?: string[]) => Document;
+
+const stockPageSelectionFilters: Record<
+  StockPageSelection,
+  StockPageSelectionFilter
+> = {
+  REPORTED_TRANSIENTS: (channels) => ({
+    journal: {
+      $elemMatch: {
+        tier: 2,
+        unit: {
+          $in: ["T2ClassificationReport", "T2InfantReport", "T2NuclearFilter"],
+        },
+        action: { $bitsAllSet: [18] },
+        ...(channels?.length ? { channel: { $in: channels } } : {}),
+      },
+    },
+  }),
+};
+
 const decodeStockCursor = (cursor: string) => {
   try {
     const payload: unknown = JSON.parse(
@@ -98,6 +119,7 @@ const encodeStockCursor = (stock: Document) =>
 
 const buildStockPageFilter = ({
   channels,
+  customSelections,
   tag,
   after,
   before,
@@ -105,6 +127,7 @@ const buildStockPageFilter = ({
   cursor,
 }: {
   channels?: string[];
+  customSelections?: StockPageSelection[];
   tag?: string;
   after?: Date;
   before?: Date;
@@ -127,6 +150,9 @@ const buildStockPageFilter = ({
   }
 
   if (tag) clauses.push({ tag });
+  for (const selection of customSelections ?? []) {
+    clauses.push(stockPageSelectionFilters[selection](channels));
+  }
   if (within) {
     const { ra, dec, arcsec } = within;
     const radiusInRad = (Math.PI * arcsec) / 3600 / 180;
@@ -350,6 +376,7 @@ export const resolvers = {
       _: unknown,
       args: {
         channels?: string[];
+        customSelections?: StockPageSelection[];
         tag?: string;
         after?: Date;
         before?: Date;

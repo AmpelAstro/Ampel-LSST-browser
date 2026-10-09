@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, ref } from "vue";
+import type { ComponentPublicInstance } from "vue";
 import LightCurvePlot from "./LightCurvePlot.vue";
 import JournalBody from "./JournalBody.vue";
 import { catalogKeys, lightCurvePoints, longToString } from "./dashboard";
@@ -12,6 +13,10 @@ const props = withDefaults(
 const activeCatalogPopover = ref<string | null>(null);
 const catalogPopoverOffset = ref(0);
 const catalogPopover = ref<HTMLElement | null>(null);
+
+function setCatalogPopover(element: Element | ComponentPublicInstance | null) {
+  catalogPopover.value = element instanceof HTMLElement ? element : null;
+}
 
 async function toggleCatalogPopover(key: string, event: MouseEvent) {
   if (activeCatalogPopover.value === key) {
@@ -118,7 +123,7 @@ function brokerLinks() {
             </button>
             <div
               v-if="activeCatalogPopover === key"
-              ref="catalogPopover"
+              :ref="setCatalogPopover"
               class="filter-popover catalog-match-popover"
               :style="{ left: `${catalogPopoverOffset}px` }"
               role="tooltip"

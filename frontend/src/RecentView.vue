@@ -9,6 +9,13 @@ const PAGE_SIZE = 20;
 const HOUR_MS = 3_600_000;
 const SLIDER_UPDATE_DEBOUNCE_MS = 120;
 const initialNow = Date.now();
+const customSelectionOptions = [
+  {
+    value: "REPORTED_TRANSIENTS",
+    label: "Reported transients",
+  },
+] as const;
+type CustomSelection = (typeof customSelectionOptions)[number]["value"];
 
 const channelQuery = `query ChannelChoices($after: DateTime, $before: DateTime) {
   channels(after: $after, before: $before)
@@ -16,6 +23,7 @@ const channelQuery = `query ChannelChoices($after: DateTime, $before: DateTime) 
 
 const stockPageQuery = `query RecentStocks(
   $channels: [String!]
+  $customSelections: [StockPageSelection!]
   $after: DateTime
   $before: DateTime
   $within: Cone
@@ -24,6 +32,7 @@ const stockPageQuery = `query RecentStocks(
 ) {
   stocksPage(
     channels: $channels
+    customSelections: $customSelections
     after: $after
     before: $before
     within: $within
@@ -66,6 +75,7 @@ const coordinateText = ref("");
 const arcsecondsText = ref("10");
 const channels = ref<string[]>([]);
 const selectedChannels = ref<string[]>([]);
+const selectedCustomSelections = ref<CustomSelection[]>([]);
 const stocks = ref<StockResult[]>([]);
 const nextCursor = ref<string | null>(null);
 const hasMore = ref(true);
@@ -122,6 +132,7 @@ const filterSignature = computed(() =>
     after: afterMs.value,
     before: beforeMs.value,
     channels: [...selectedChannels.value].sort(),
+    customSelections: [...selectedCustomSelections.value].sort(),
     coordinates: coordinateText.value.trim(),
     arcseconds: arcsecondsText.value,
   }),
@@ -173,6 +184,7 @@ function stockVariables(cursor: string | null) {
   return {
     ...dateVariables(),
     channels: selectedChannels.value.length ? selectedChannels.value : null,
+    customSelections: [...selectedCustomSelections.value],
     within: location.cone ?? null,
     cursor,
     limit: PAGE_SIZE,
@@ -409,6 +421,30 @@ onBeforeUnmount(() => {
             <p class="field-note">
               Multiple selections include matches from any selected channel.
             </p>
+          </section>
+
+          <section class="filter-section">
+            <div class="section-heading">
+              <span>Custom selections</span>
+              <span class="unit-label">
+                {{ selectedCustomSelections.length || "NONE" }}
+              </span>
+            </div>
+            <div class="channel-list">
+              <label
+                v-for="selection in customSelectionOptions"
+                :key="selection.value"
+                class="channel-option"
+              >
+                <input
+                  v-model="selectedCustomSelections"
+                  type="checkbox"
+                  :value="selection.value"
+                />
+                <span class="checkmark"></span>
+                <span>{{ selection.label }}</span>
+              </label>
+            </div>
           </section>
 
           <section class="filter-section location-section">

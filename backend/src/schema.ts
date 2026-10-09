@@ -154,6 +154,10 @@ input Cone {
   arcsec: Float!
 }
 
+enum StockPageSelection {
+  REPORTED_TRANSIENTS
+}
+
 type Query {
   "Fetch a single stock document by its identifier"
   stock(stock: Long!): Stock
@@ -162,7 +166,7 @@ type Query {
   "Fetch distinct channels represented by stocks updated in a time range"
   channels(after: DateTime, before: DateTime): [String!]!
   "Fetch a page of stocks, matching any selected channel"
-  stocksPage(channels: [String!], tag: String, after: DateTime, before: DateTime, within: Cone, cursor: String, limit: Int = 20): StockPage!
+  stocksPage(channels: [String!], customSelections: [StockPageSelection!], tag: String, after: DateTime, before: DateTime, within: Cone, cursor: String, limit: Int = 20): StockPage!
 }
 
 `;

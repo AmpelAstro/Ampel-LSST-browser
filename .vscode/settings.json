@@ -12,6 +12,7 @@
     "javascriptreact"
   ],
   "chat.tools.terminal.autoApprove": {
-    "npx vite": true
+    "npx vite": true,
+    "npx vue-tsc": true
   }
 }
