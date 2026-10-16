@@ -573,12 +573,7 @@ export const resolvers = {
       }
       return parent.journal;
     },
-    photometry: async (
-      parent: StockDocument,
-      _: unknown,
-      __: unknown,
-      info: GraphQLResolveInfo,
-    ) => {
+    photometry: async (parent: StockDocument) => {
       const ids = new Map<string, Long>();
       for (const record of parent.journal ?? []) {
         if (record.tier !== 0) continue;
@@ -589,10 +584,72 @@ export const resolvers = {
       const db = await connectDb();
       return db
         .collection("t0")
-        .find(
-          { stock: parent.stock, id: { $in: [...ids.values()] } },
-          { projection: buildProjection(info) },
-        )
+        .aggregate([
+          {
+            $match: {
+              stock: parent.stock,
+              id: { $in: [...ids.values()] },
+              tag: { $in: ["LSST_DP", "LSST_FP"] },
+              "body.visit": { $type: "number" },
+              "body.band": { $type: "string" },
+              "body.midpointMjdTai": { $type: "number" },
+              "body.psfFlux": { $type: "number" },
+              "body.psfFluxErr": { $gt: 0 },
+            },
+          },
+          {
+            $set: {
+              _photometryType: {
+                $cond: [{ $in: ["LSST_DP", "$tag"] }, "LSST_DP", "LSST_FP"],
+              },
+              _day: {
+                $toLong: {
+                  $floor: { $divide: ["$body.visit", 100000] },
+                },
+              },
+              _inverseVariance: {
+                $divide: [1, { $pow: ["$body.psfFluxErr", 2] }],
+              },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                band: "$body.band",
+                day: "$_day",
+                type: "$_photometryType",
+              },
+              band: { $first: "$body.band" },
+              day: { $first: "$_day" },
+              type: { $first: "$_photometryType" },
+              midpointMjdTai: {
+                $median: {
+                  input: "$body.midpointMjdTai",
+                  method: "approximate",
+                },
+              },
+              weightedFlux: {
+                $sum: { $multiply: ["$body.psfFlux", "$_inverseVariance"] },
+              },
+              inverseVarianceSum: { $sum: "$_inverseVariance" },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              tag: ["$type"],
+              body: {
+                visit: "$day",
+                band: "$band",
+                midpointMjdTai: "$midpointMjdTai",
+                psfFlux: { $divide: ["$weightedFlux", "$inverseVarianceSum"] },
+                psfFluxErr: {
+                  $sqrt: { $divide: [1, "$inverseVarianceSum"] },
+                },
+              },
+            },
+          },
+        ])
         .toArray();
     },
   },

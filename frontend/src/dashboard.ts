@@ -91,12 +91,6 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>;
 }
 
-function candidatePriority(tags: string[]): number {
-  if (tags.includes("LSST_DP")) return 2;
-  if (tags.includes("LSST_FP")) return 1;
-  return 0;
-}
-
 export function lightCurvePoints(stock: StockResult): PhotometryPoint[] {
   const selected = new Map<
     string,
@@ -141,14 +135,17 @@ export function lightCurvePoints(stock: StockResult): PhotometryPoint[] {
       flux,
       fluxError,
     };
-    const priority = candidatePriority(tags);
-    const current = selected.get(visit);
-    if (
-      !current ||
-      priority > current.priority ||
-      (priority === current.priority && fluxError < current.point.fluxError)
-    ) {
-      selected.set(visit, { point, priority });
+    const priority = tags.includes("LSST_FP")
+      ? 2
+      : tags.includes("LSST_DP")
+        ? 1
+        : 0;
+    if (priority === 0) continue;
+
+    const key = `${band}:${visit}`;
+    const current = selected.get(key);
+    if (!current || priority > current.priority) {
+      selected.set(key, { point, priority });
     }
   }
 
