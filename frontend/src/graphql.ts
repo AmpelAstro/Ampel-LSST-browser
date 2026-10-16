@@ -24,20 +24,3 @@ export async function requestGraphQL<T>(
     throw new Error("The GraphQL response did not contain data.");
   return result.data;
 }
-
-// Journal-linked photometry for the stock row's light curve
-export const PHOTOMETRY_LINK_FIELDS = `
-  link {
-    __typename
-    ... on T0Document {
-      tag
-      body
-    }
-    ... on T1Document {
-      dps {
-        tag
-        body
-      }
-    }
-  }
-`;

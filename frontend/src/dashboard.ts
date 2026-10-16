@@ -11,29 +11,21 @@ export interface PhotometryPoint {
   fluxError: number;
 }
 
-interface DataPoint {
-  id?: LongValue;
+interface PhotometryDocument {
   tag?: string[] | null;
   body?: Record<string, unknown> | null;
-}
-
-interface LinkedDocument {
-  __typename?: string;
-  body?: Record<string, unknown> | null;
-  dps?: DataPoint[] | null;
 }
 
 export interface JournalRecord {
   doc?: {
     body?: Record<string, unknown> | null;
-    link?: LinkedDocument | null;
   } | null;
 }
 
 export interface StockResult {
   stock: LongValue;
   channel?: string[] | null;
-  photometry?: JournalRecord[] | null;
+  photometry?: PhotometryDocument[] | null;
   catalogMatches?: JournalRecord[] | null;
 }
 
@@ -99,19 +91,6 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>;
 }
 
-function datapointsFromJournal(records: JournalRecord[] = []): DataPoint[] {
-  const datapoints: DataPoint[] = [];
-  for (const record of records) {
-    const linked = record.doc?.link;
-    if (linked?.__typename === "T1Document") {
-      datapoints.push(...(linked.dps ?? []));
-    } else if (linked?.__typename === "T0Document" && linked.body) {
-      datapoints.push({ body: linked.body });
-    }
-  }
-  return datapoints;
-}
-
 function candidatePriority(tags: string[]): number {
   if (tags.includes("LSST_DP")) return 2;
   if (tags.includes("LSST_FP")) return 1;
@@ -124,9 +103,9 @@ export function lightCurvePoints(stock: StockResult): PhotometryPoint[] {
     { point: PhotometryPoint; priority: number }
   >();
 
-  for (const datapoint of datapointsFromJournal(stock.photometry ?? [])) {
-    const body = asRecord(datapoint.body);
-    const tags = datapoint.tag ?? [];
+  for (const document of stock.photometry ?? []) {
+    const body = asRecord(document.body);
+    const tags = document.tag ?? [];
     if (!body || tags.includes("LSST_OBJ")) continue;
 
     const visitValue = body.visit;

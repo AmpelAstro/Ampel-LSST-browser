@@ -255,6 +255,15 @@ const DocumentCode = {
   T3_RUN_ERROR: -3004,
 };
 
+interface T0Document {
+  id: Long;
+  stock: Long;
+  origin: Long | null;
+  tag: string[] | null;
+  channel: string[] | null;
+  body: object;
+}
+
 interface T2Document {
   link: Long | null;
   col: string | null;
@@ -268,6 +277,7 @@ interface JournalRecord {
   unit: string;
   ts: number;
   doc: Binary | ObjectId | null;
+  upsert?: Long[];
   channel?: string | string[] | null;
   action?: number | { toNumber(): number } | null;
   alert?: { toString(): string } | null;
@@ -284,6 +294,7 @@ interface StockDocument {
   channel: string[];
   tag: string[];
   journal: JournalRecord[];
+  photometry: T0Document[];
   meta: MetaRecord[];
 }
 
@@ -561,6 +572,28 @@ export const resolvers = {
         });
       }
       return parent.journal;
+    },
+    photometry: async (
+      parent: StockDocument,
+      _: unknown,
+      __: unknown,
+      info: GraphQLResolveInfo,
+    ) => {
+      const ids = new Map<string, Long>();
+      for (const record of parent.journal ?? []) {
+        if (record.tier !== 0) continue;
+        for (const id of record.upsert ?? []) ids.set(id.toString(), id);
+      }
+      if (ids.size === 0) return [];
+
+      const db = await connectDb();
+      return db
+        .collection("t0")
+        .find(
+          { stock: parent.stock, id: { $in: [...ids.values()] } },
+          { projection: buildProjection(info) },
+        )
+        .toArray();
     },
   },
 };

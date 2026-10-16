@@ -5,7 +5,7 @@ import JournalBody from "./JournalBody.vue";
 import StockRow from "./StockRow.vue";
 import { decodeActionFlags, formatTimeDelta } from "./actions";
 import type { JournalRecord, StockResult } from "./dashboard";
-import { PHOTOMETRY_LINK_FIELDS, requestGraphQL } from "./graphql";
+import { requestGraphQL } from "./graphql";
 
 const props = defineProps<{ id: string }>();
 
@@ -13,6 +13,10 @@ const stockQuery = `query Stock($stock: Long!) {
   stock(stock: $stock) {
     stock
     channel
+    photometry {
+      tag
+      body
+    }
     journal {
       tier
       ts
@@ -26,7 +30,6 @@ const stockQuery = `query Stock($stock: Long!) {
       doc {
         config
         body
-        ${PHOTOMETRY_LINK_FIELDS}
       }
     }
   }
@@ -63,6 +66,7 @@ interface StockData {
   stock: {
     stock: StockResult["stock"];
     channel: string[] | null;
+    photometry: StockResult["photometry"];
     journal: JournalEntry[] | null;
   } | null;
 }
@@ -108,7 +112,7 @@ const stockRow = computed<StockResult | null>(() => {
   return {
     stock: data.value.stock,
     channel: data.value.channel,
-    photometry: journal.filter((entry) => entry.tier === 2),
+    photometry: data.value.photometry ?? null,
     catalogMatches: journal.filter((entry) => entry.unit === "T2CatalogMatch"),
   };
 });

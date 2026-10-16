@@ -13,6 +13,7 @@
   ],
   "chat.tools.terminal.autoApprove": {
     "npx vite": true,
-    "npx vue-tsc": true
+    "npx vue-tsc": true,
+    "npx eslint": true
   }
 }

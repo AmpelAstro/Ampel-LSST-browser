@@ -137,6 +137,7 @@ type Stock {
   "Survey names"
   name: [String!]
   journal(tier: Int, unit: String): [JournalRecord]
+  photometry: [T0Document]
   body: JSONObject
 }
 

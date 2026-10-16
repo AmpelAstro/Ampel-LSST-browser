@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import StockRow from "./StockRow.vue";
 import { longToString } from "./dashboard";
 import type { StockResult } from "./dashboard";
-import { PHOTOMETRY_LINK_FIELDS, requestGraphQL } from "./graphql";
+import { requestGraphQL } from "./graphql";
 
 const PAGE_SIZE = 20;
 const HOUR_MS = 3_600_000;
@@ -42,10 +42,9 @@ const stockPageQuery = `query RecentStocks(
     items {
       stock
       channel
-      photometry: journal(tier: 2) {
-        doc {
-          ${PHOTOMETRY_LINK_FIELDS}
-        }
+      photometry {
+        tag
+        body
       }
       catalogMatches: journal(unit: "T2CatalogMatch") {
         doc {
