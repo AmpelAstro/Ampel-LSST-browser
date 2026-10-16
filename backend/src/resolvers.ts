@@ -79,6 +79,7 @@ const stockPageSelectionFilters: Record<
         unit: {
           $in: ["T2ClassificationReport", "T2InfantReport", "T2NuclearFilter"],
         },
+        // T2_ADD_BODY flag indicates that report was sent
         action: { $bitsAllSet: [18] },
         ...(channels?.length ? { channel: { $in: channels } } : {}),
       },
